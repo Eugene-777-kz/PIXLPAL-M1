@@ -1,5 +1,5 @@
-#ifndef STUDIO_LIGHT_H
-#define STUDIO_LIGHT_H
+#ifndef EXAMPLE_WRITE_TEXT_H
+#define EXAMPLE_WRITE_TEXT_H
 
 // #include <stdio.h>
 #include <Arduino.h>

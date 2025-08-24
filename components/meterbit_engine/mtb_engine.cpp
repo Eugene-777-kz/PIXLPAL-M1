@@ -714,7 +714,7 @@ void mtb_sMedia_App_Lunch(uint16_t dAppNumber){
     switch(dAppNumber){
         case 0: mtb_Launch_This_App(exampleWriteTextApp); break;
         case 1: mtb_Launch_This_App(exampleDrawShapes_App); break;
-        // case 2: mtb_Launch_This_App(classicClock_App); break; 
+        case 2: mtb_Launch_This_App(exampleDrawImages_App); break; 
         // case 3: mtb_Launch_This_App(classicClock_App); break; 
         // case 4: mtb_Launch_This_App(classicClock_App); break;
         // case 5: mtb_Launch_This_App(classicClock_App); break;

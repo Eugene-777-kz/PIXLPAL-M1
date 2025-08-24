@@ -43,6 +43,13 @@
         int8_t scale = 1;
     };
 
+    struct SVG_LocalImage_t {
+        char imagePath[50] = {0};
+        uint16_t xAxis = 0;
+        uint16_t yAxis = 0;
+        int8_t scale = 1;
+    };
+
     struct PNG_OnlineImage_t {
         char imageLink[300] = {0};
         uint16_t xAxis = 0;
@@ -67,13 +74,13 @@
     } PNG_PreloadedImage_t;
 
 
-typedef struct {
-    SVG_OnlineImage_t meta;
-    uint8_t* svgBuffer = nullptr;
-    size_t svgSize = 0;
-    bool isReady = false;
-    bool failed = false;
-} SVG_PreloadedImage_t;
+    typedef struct {
+        SVG_OnlineImage_t meta;
+        uint8_t* svgBuffer = nullptr;
+        size_t svgSize = 0;
+        bool isReady = false;
+        bool failed = false;
+    } SVG_PreloadedImage_t;
 
 
 
@@ -93,6 +100,7 @@ typedef struct
     extern void mtb_Time_Setup_Init(void);
 
     extern BaseType_t mtb_Draw_Local_Png(const PNG_LocalImage_t&);
+    extern BaseType_t mtb_Draw_Local_Svg(const SVG_LocalImage_t&);
     extern void mtb_Draw_Local_Png_Task(void *);   
 
     extern void mtb_Draw_Online_Png(const PNG_OnlineImage_t* images, size_t drawPNGsCount = 1, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);
