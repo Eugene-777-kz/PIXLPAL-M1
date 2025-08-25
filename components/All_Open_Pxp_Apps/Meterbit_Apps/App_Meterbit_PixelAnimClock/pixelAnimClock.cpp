@@ -28,7 +28,6 @@ PixAnimClkSettings_t savedPixAnimClkSet{
     .animInterval = 1
 };
 
-//uint8_t set_Pixel_Change_Duration = 1;
 EXT_RAM_BSS_ATTR TaskHandle_t pixAnimClock_Task_H = NULL;
 EXT_RAM_BSS_ATTR TaskHandle_t pixAnimClockGif_Task_H = NULL;
 void printPixAnimClkThm(uint16_t*);

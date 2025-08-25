@@ -12,7 +12,6 @@
 #include "mtb_graphics.h"
 #include "mtb_littleFs.h"
 #include "mtb_engine.h"
-#include "mtb_gif_parser.h"
 #include "mtb_nvs.h"
 #include "mtb_buzzer.h"
 #include "pxp_secret_keys.h"

@@ -1,7 +1,10 @@
-/components/meterbit_graphics/*.cpp
+
 /components/meterbit_engine/include/pxp_secret_keys.h
+/components/meterbit_graphics/mtb_text_scroll.cpp
+/components/meterbit_graphics/mtb_graphics.cpp
 
 /build/*
+**/.DS_Store
 #!/build/PIXLPAL-M1.bin
 #!/build/ota_data_initial.bin
 #!/build/spiffs.bin

@@ -16,7 +16,6 @@
 #include "mtb_system.h"
 #include "mtb_text_scroll.h"
 #include "mtb_ntp.h"
-#include "mtb_gif_parser.h"
 #include "mtb_engine.h"
 
 

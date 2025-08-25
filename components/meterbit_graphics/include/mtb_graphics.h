@@ -20,30 +20,30 @@
 #include "mtb_nvs.h"
 
 #define STATIC_STYLE    1
-#define DYNAMIC_STYLE   0
+#define DYNAMIC_STYLE   0   
 
-#define MATRIX_WIDTH 128
-#define MATRIX_HEIGHT 64
+#define MATRIX_WIDTH 128    // LED Matrix Display Width in pixels
+#define MATRIX_HEIGHT 64    // LED Matrix Display Height in pixels
 
-#define PANEL_RES_X 128      // Number of pixels wide of each INDIVIDUAL panel module. 
+#define PANEL_RES_X 128    // Number of pixels wide of each INDIVIDUAL panel module. 
 #define PANEL_RES_Y 64     // Number of pixels tall of each INDIVIDUAL panel module.
 #define PANEL_CHAIN 1      // Total number of panels chained one to another
 
-#define ALM_BUZZER    48
-#define RGB_LED_PIN_R 3
-#define RGB_LED_PIN_G 42
-#define RGB_LED_PIN_B 38
+#define ALM_BUZZER    48    // GPIO pin for the alarm buzzer
+#define RGB_LED_PIN_R 3     // GPIO pin for the RGB status LED
+#define RGB_LED_PIN_G 42    // GPIO pin for the RGB status LED
+#define RGB_LED_PIN_B 38    // GPIO pin for the RGB status LED
 
     extern SemaphoreHandle_t onlinePNGsDrawReady_Sem;
 
-    struct Mtb_LocalImage_t {
+    struct Mtb_LocalImage_t {           // Structure for local images stored in SPIFFS
         char imagePath[50] = {0};
         uint16_t xAxis = 0;
         uint16_t yAxis = 0;
         int8_t scale = 1;
     };
 
-    struct Mtb_OnlineImage_t {
+    struct Mtb_OnlineImage_t {          // Structure for online images to be downloaded from URL
         char imageLink[300] = {0};
         uint16_t xAxis = 0;
         uint16_t yAxis = 0;
@@ -51,16 +51,21 @@
     };
 
     typedef struct {
-        Mtb_OnlineImage_t meta;       // original input
+        Mtb_OnlineImage_t meta;         
         uint8_t* imageBuffer = nullptr;
         size_t imageSize = 0;
         bool isReady = false;
         bool failed = false;
-    } Mtb_PreloadedImage_t;
+    } Mtb_PreloadedImage_t;             // Structure for preloaded online images
 
+    struct Mtb_LocalAnim_t {           // Structure for local Animations stored in SPIFFS
+        char imagePath[50] = {0};
+        uint16_t xAxis = 0;
+        uint16_t yAxis = 0;
+        int8_t loopCount = 1;
+    };
 
-typedef struct
-{
+typedef struct{
 	uint16_t color;		// 16-bit 565 color
 	uint8_t brightness; // 0-255
 } rgb_led_message_t;
@@ -75,19 +80,20 @@ typedef struct
 //    extern void mtb_Time_Setup_Init(void);
 
 
-    // USER FUNCTIONS
-    extern BaseType_t mtb_Draw_Local_Png(const Mtb_LocalImage_t&);
-    extern BaseType_t mtb_Draw_Local_Svg(const Mtb_LocalImage_t&);
+    // USER IMAGE DRAW FUNCTIONS
+    extern BaseType_t mtb_Draw_Local_Png(const Mtb_LocalImage_t&);                                                                                          // Draw a local PNG image from SPIFFS
+    extern void mtb_Draw_Online_Png(const Mtb_OnlineImage_t* images, size_t drawPNGsCount = 1, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);    // Draw an online PNG image from URL
+    extern void mtb_Download_Multi_Png(const Mtb_OnlineImage_t* images, size_t drawPNGsCount);                                                              // Download multiple PNG images from URLs
+    extern bool mtb_Draw_Multi_Png(size_t drawPNGsCount, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);                                          // Draw multiple pre-downloaded PNG images
 
-    extern void mtb_Draw_Online_Png(const Mtb_OnlineImage_t* images, size_t drawPNGsCount = 1, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);
-    extern void mtb_Download_Multi_Png(const Mtb_OnlineImage_t* images, size_t drawPNGsCount);
-    extern bool mtb_Draw_Multi_Png(size_t drawPNGsCount, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);
 
-    extern void mtb_Draw_Online_Svg(const Mtb_OnlineImage_t* images, size_t drawSVGsCount = 1, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);
-    extern void mtb_Download_Multi_Svg(const Mtb_OnlineImage_t* images, size_t drawSVGsCount);
-    extern bool mtb_Draw_Multi_Svg(size_t drawSVGsCount, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);
+    extern BaseType_t mtb_Draw_Local_Svg(const Mtb_LocalImage_t&);                                                                                          // Draw a local SVG image from SPIFFS
+    extern void mtb_Draw_Online_Svg(const Mtb_OnlineImage_t* images, size_t drawSVGsCount = 1, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);    // Draw an online SVG image from URL
+    extern void mtb_Download_Multi_Svg(const Mtb_OnlineImage_t* images, size_t drawSVGsCount);                                                              // Download multiple SVG images from URLs
+    extern bool mtb_Draw_Multi_Svg(size_t drawSVGsCount, ImgWipeFn_ptr wipePreviousImgs = mtb_Do_Nothing_Void_Fn);                                          // Draw multiple pre-downloaded SVG images
 
-    extern void mtb_Set_Status_RGB_LED(uint16_t color, uint8_t brightness = (uint8_t) panelBrightness/2);
+    extern uint8_t mtb_Draw_Local_Gif(const Mtb_LocalAnim_t &dAnim);
+    extern void mtb_Set_Status_RGB_LED(uint16_t color, uint8_t brightness = (uint8_t) panelBrightness/2);                                                   // Set the RGB LED color and brightness
     //************************************************************************************************************************************************* */
 
 
@@ -103,6 +109,9 @@ typedef struct
     extern QueueHandle_t nvsAccessQueue;
     extern QueueHandle_t rgb_led_queue;
 
+
+
+    // TEXT PROCESSING CLASSES
     class Mtb_Static_Text_t{
     public:
     uint8_t yAxis, xAxis, charSpacing;
@@ -114,11 +123,13 @@ typedef struct
     static void mtb_Config_Disp_Panel_Pins(void);
     static void mtb_Init_Led_Matrix_Panel();
     static void mtb_Clear_Screen(void);
-
     void setfont(const uint8_t *font);
     void writeXter(uint16_t a, uint16_t x, uint16_t y);
-    uint16_t mtb_Write_String(const char *myString);
-    uint16_t mtb_Write_String(String myString);
+
+    // USER TEXT FUNCTIONS
+    uint16_t mtb_Write_String(const char *myString);    // Write a char array string to the display
+    uint16_t mtb_Write_String(String myString);         // Write a String object to the display
+
 
     virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t){}
     virtual void mtb_Update_Panel_Segment(void){}
@@ -130,19 +141,25 @@ typedef struct
     virtual ~Mtb_Static_Text_t() {}  // Add this line
 };
 
+
+    // Inherit from Mtb_Static_Text_t to create a fixed text class with color and background color options
 class Mtb_FixedText_t : public Mtb_Static_Text_t {
     public:
     static uint8_t** scratchPad;
     uint16_t color;
     uint16_t backgroundColor = BLACK;
     virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t);
+    virtual void mtb_Update_Panel_Segment(void);
+    virtual void mtb_Clear_Panel_Segment(void);
+        
+    // FIXED TEXT USER FUNCTIONS ********************************************************************************
     virtual uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor);
     virtual uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor, uint16_t dBackgroundColor);
     virtual uint16_t mtb_Write_Colored_String(String myString, uint16_t dColor);
     virtual uint16_t mtb_Write_Colored_String(String myString, uint16_t dColor, uint16_t dBackgroundColor);
     virtual uint16_t mtb_Clear_String();
-    virtual void mtb_Update_Panel_Segment(void);
-    virtual void mtb_Clear_Panel_Segment(void);
+    // END OF FIXED TEXT USER FUNCTIONS *********************************************************************************************************
+
     Mtb_FixedText_t();
     Mtb_FixedText_t(uint16_t x1, uint16_t y1, const uint8_t *font = Terminal6x8, uint16_t dColor = OLIVE_GREEN, uint16_t dBackGrndColor = BLACK) : Mtb_Static_Text_t(x1, y1, font){
         textStyle = STATIC_STYLE;
@@ -159,12 +176,18 @@ class Mtb_FixedText_t : public Mtb_Static_Text_t {
     virtual ~Mtb_FixedText_t() {}  // Add this line
 };
 
+
+// Inherit from Mtb_FixedText_t to create a centered text class
 class Mtb_CentreText_t : public Mtb_FixedText_t {
     public:
+
+    // FIXED TEXT USER FUNCTIONS ********************************************************************************
     uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor);
     uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor, uint16_t dBackgroundColor);
     uint16_t mtb_Write_Colored_String(String myString, uint16_t dColor);
     uint16_t mtb_Write_Colored_String(String myString, uint16_t dColor, uint16_t dBackgroundColor);
+    // END OF FIXED TEXT USER FUNCTIONS *********************************************************************************************************
+
     void mtb_Update_Panel_Segment(void){}
     void mtb_Clear_Panel_Segment(void);
     Mtb_CentreText_t();
@@ -177,14 +200,13 @@ class Mtb_CentreText_t : public Mtb_FixedText_t {
     void operator delete(void* ptr) {heap_caps_free(ptr);}
 };
 
+// SCROLL TEXT HELPER CLASS
 class ScrollTextHelper_t : public Mtb_Static_Text_t {
     public:
     uint8_t ** scrollBuffer;
     virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t);
     ScrollTextHelper_t();
-    ScrollTextHelper_t(uint16_t x1, uint16_t y1, const uint8_t *font = Terminal6x8) : Mtb_Static_Text_t(x1, y1, font) {
-        textStyle = DYNAMIC_STYLE;
-        }
+    ScrollTextHelper_t(uint16_t x1, uint16_t y1, const uint8_t *font = Terminal6x8) : Mtb_Static_Text_t(x1, y1, font) { textStyle = DYNAMIC_STYLE;}
 };
 
     extern MatrixPanel_I2S_DMA *dma_display;

@@ -15,7 +15,6 @@
 #include "mtb_ota.h"
 #include "mtb_usb_ota.h"
 #include "mtb_wifi.h"
-#include "mtb_gif_parser.h"
 #include "mtb_usb_fs.h"
 #include "mtb_buzzer.h"
 
@@ -47,7 +46,7 @@ void  firmwareUpdateTask(void* dApplication){
     
     if(litFS_Ready){
         uint8_t countdown = panelBrightness, countup = 0;
-        // mtb_draw_gif("/mtblg/mtbStart.gif", 0, 0, 1);
+        // mtb_Draw_Local_Gif("/mtblg/mtbStart.gif", 0, 0, 1);
         // delay(1000);
         // while (countdown-- > 0){
         //     dma_display->setBrightness(countdown);

@@ -360,5 +360,5 @@ extern Mtb_Applications_StatusBar *spotify_App;                 // App Communica
 // Example Apps
 extern Mtb_Applications_FullScreen* exampleWriteTextApp;                  // App Communication Route: 10/0
 extern Mtb_Applications_StatusBar* exampleDrawShapes_App;                // App Communication Route: 10/1
-extern Mtb_Applications_StatusBar* exampleDrawImages_App;                 // App Communication Route: 10/2
+extern Mtb_Applications_FullScreen* exampleDrawImages_App;                 // App Communication Route: 10/2
 #endif
