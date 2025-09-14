@@ -27,7 +27,7 @@ EXT_RAM_BSS_ATTR TaskHandle_t beepTaskHandle = NULL;
 uint8_t beep_TYPE = 0;
 uint8_t beep_COUNT = 0;
 
-EXT_RAM_BSS_ATTR Mtb_Services *beep_Buzzer_Sv = new Mtb_Services(buzzer_Beep, &beepTaskHandle, "Beep Sound", 2048, 3, pdTRUE);
+EXT_RAM_BSS_ATTR Mtb_Services *beep_Buzzer_Sv = new Mtb_Services(buzzer_Beep, &beepTaskHandle, "Beep Sound", 4096, 3, pdTRUE);
 
 void do_beep(uint8_t beep_Typ, uint8_t beep_Cnt){
     beep_COUNT = beep_Cnt;

@@ -81,7 +81,7 @@ extern RawAudioData AudioSamplesTransport;
 extern TimerHandle_t showRandomPatternTimer_H;
 extern TaskHandle_t audioProcessing_Task_H;
 extern QueueHandle_t audioProcessing_Q_H;
-extern QueueHandle_t audioTextInfo_Q_H;
+extern QueueHandle_t audioTextInfo_Q;
 extern SemaphoreHandle_t dac_Start_Sem_H;
 
 extern void audioProcessing_Task(void *params);
@@ -98,6 +98,8 @@ extern void mtb_Use_Mic_Or_Dac(uint8_t);
 extern void randomPattern_TimerCallback(TimerHandle_t dHandle);
 extern void init_Mic_DAC_Audio_Processing_Peripherals(void);
 extern void de_init_Mic_DAC_Audio_Processing_Peripherals(void);
+extern void initAudioVisualPattern(void);
+extern void deInitAudioVisualPattern(void);
 
 
 class MTB_Audio {

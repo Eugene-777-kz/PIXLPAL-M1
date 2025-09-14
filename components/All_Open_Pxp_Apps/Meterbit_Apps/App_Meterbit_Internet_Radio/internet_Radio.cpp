@@ -56,7 +56,7 @@ void  internetRadio_App_Task(void* dApplication){
     thisApp->mtb_App_EncoderFn_ptr = mtb_Vol_Control_Encoder;
     thisApp->mtb_App_ButtonFn_ptr = intRadioButtonControl;
     mtb_Ble_AppComm_Parser_Sv->mtb_Register_Ble_Comm_ServiceFns(selectRadioStations, playRadioStationLink, updateSavedStations, volumeControl);
-    mtb_App_Init(thisApp, mtb_Status_Bar_Clock_Sv, mtb_AudioOut_Sv);
+    mtb_App_Init(thisApp, mtb_Status_Bar_Clock_Sv, mtb_Dac_N_Mic_Sv);
   //**************************************************************************************************************************
     AudioTextTransfer_T audioTextReceiver;
     Mtb_ScrollText_t fmStation(11, 46, 116, CYAN, 15, 20000, Terminal6x8, 20000);
@@ -80,11 +80,10 @@ void  internetRadio_App_Task(void* dApplication){
     conn2Sta.mtb_Scroll_This_Text("Awaiting internet connection...", GREEN_LIZARD);
     while(!(Mtb_Applications::internetConnectStatus) && (MTB_APP_IS_ACTIVE == pdTRUE)) vTaskDelay(pdMS_TO_TICKS(500));
 
-    delay(500); //This delay is placed here to allow "audioTextInfo_Q_H" to be created.
+    delay(500); //This delay is placed here to allow "audioTextInfo_Q" to be created.
     bool cont_To_Host = false;
     conn2Sta.mtb_Scroll_This_Text("Connecting to Station....", ORANGE_RED);
     
-
     do{
       delay(500);
       cont_To_Host = mtb_audioPlayer->mtb_ConnectToHost(currentRadioStation.streamLink);
@@ -97,7 +96,7 @@ void  internetRadio_App_Task(void* dApplication){
       radioPlayReady = true;
 
       while ((Mtb_Applications::internetConnectStatus) && (radioPlayReady) && (MTB_APP_IS_ACTIVE == pdTRUE)){
-        if(xQueueReceive(audioTextInfo_Q_H, &audioTextReceiver, 0) == pdTRUE){
+        if(xQueueReceive(audioTextInfo_Q, &audioTextReceiver, 0) == pdTRUE){
           switch(audioTextReceiver.Audio_Text_type){
 
             case AUDIO_SHOW_STATION:

@@ -104,14 +104,18 @@ void mtb_Launch_This_App(Mtb_Applications *dApp, Mtb_Do_Prev_App_t do_Prv_App){
 // }
 
 void mtb_Start_This_Service(Mtb_Services* dService){
+    BaseType_t result;
     if(*(dService->serviceT_Handle_ptr) == NULL) {  // Prevents the service from being started multiple times
         dService->service_is_Running = pdTRUE;
-        if(dService->usePSRAM_Stack == pdFALSE) {xTaskCreatePinnedToCore(dService->service, dService->serviceName, dService->stackSize, dService, dService->servicePriority, dService->serviceT_Handle_ptr, dService->serviceCore);
+        if(dService->usePSRAM_Stack == pdFALSE) {
+            result = xTaskCreatePinnedToCore(dService->service, dService->serviceName, dService->stackSize, dService, dService->servicePriority, dService->serviceT_Handle_ptr, dService->serviceCore);
+            if(result == pdPASS) ESP_LOGW(TAG, "Task %s successfully launched\n", dService->serviceName);
+            else ESP_LOGE(TAG, "Task %s failed to launch successful\n", dService->serviceName);
         } else {
             dService->task_stack = (StackType_t *)heap_caps_malloc(dService->stackSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
             dService->tcb_psram = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
             if (dService->task_stack == NULL || dService->tcb_psram == NULL){ 
-                ESP_LOGI(TAG, "Failed to allocate task/tcb stack in PSRAM\n"); 
+                ESP_LOGE(TAG, "Failed to allocate task/tcb stack in PSRAM\n"); 
                 return;
             }
             // Create the task with the stack in PSRAM
@@ -254,7 +258,7 @@ void Mtb_Applications::appDestroy(Mtb_Applications* dApp){
         while(*(dApp->appHandle_ptr) != NULL) delay(1);
     }
 
-    ESP_LOGI(TAG, "APP DESTROY FIRST STAGE COMPLETED\n");
+    //ESP_LOGI(TAG, "APP DESTROY FIRST STAGE COMPLETED\n");
 
     for (Mtb_Services *element : dApp->appServices){
     if(element != nullptr && element->service_is_Running == pdTRUE){
@@ -263,7 +267,7 @@ void Mtb_Applications::appDestroy(Mtb_Applications* dApp){
         }
     }
     
-    ESP_LOGI(TAG, "APP DESTROY SECOND STAGE COMPLETED\n");
+    //ESP_LOGI(TAG, "APP DESTROY SECOND STAGE COMPLETED\n");
 
     // for (uint8_t i = 0; i < 5; i++){
     //     if (*(scroll_Tasks_Sv[i]->serviceT_Handle_ptr) != NULL){
@@ -284,7 +288,7 @@ void Mtb_Applications::appDestroy(Mtb_Applications* dApp){
         }
     }
 
-    ESP_LOGI(TAG, "APP DESTROY COMPLETED SUCCESSFULLY.\n");
+    //ESP_LOGI(TAG, "APP DESTROY COMPLETED SUCCESSFULLY.\n");
 
 }
 

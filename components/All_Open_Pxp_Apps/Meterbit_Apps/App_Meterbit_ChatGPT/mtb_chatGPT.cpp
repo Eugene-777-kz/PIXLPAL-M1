@@ -79,8 +79,7 @@ void  chatGPT_App_Task(void* dApplication){
   Mtb_ScrollText_t conn2Intnt(11, 55, 116, ORANGE_RED, 15, 20000, Terminal6x8, 1000);
   thisApp->mtb_App_EncoderFn_ptr = mtb_Vol_Control_Encoder;
   thisApp->mtb_App_ButtonFn_ptr = Listen_Process_Button;
-  //appMQTT_Parser_Sv->register_MqttServiceFns(selectPattern, selectNumOfBands, setRandomPatterns, setSensitivity);
-  mtb_App_Init(thisApp, mtb_Mic_Sv, mtb_Status_Bar_Clock_Sv, mtb_AudioOut_Sv);
+  mtb_App_Init(thisApp, mtb_Dac_N_Mic_Sv, mtb_Status_Bar_Clock_Sv);
   //**************************************************************************************************************************
   humanSpeech = new Mtb_ScrollText_t (11, 45, 116, CYAN, 25, 20000, Terminal6x8, 0);
   aiResponse = new Mtb_ScrollText_t(11, 55, 116, YELLOW, 15, 3, Terminal6x8, 0);
@@ -110,7 +109,7 @@ void  chatGPT_App_Task(void* dApplication){
   audioTranscription.setTemperature(0.2);  //float between 0 and 1. Higher value gives more random results.
   audioTranscription.setLanguage("en"); 
 
-  delay(500); //This delay is placed here to allow "audioTextInfo_Q_H" to be created.
+  delay(500); //This delay is placed here to allow "audioTextInfo_Q" to be created.
 
 //######################################################################################### */
     while (MTB_APP_IS_ACTIVE == pdTRUE){
@@ -265,6 +264,7 @@ void micAudioListen_Task(void* d_Service){	// Consider using hardware timer for 
   mtb_Draw_Local_Png({"/batIcons/aiResp.png", 2, 45});
   recWave.psRamFile_P = create_wav_in_psram(totalSampleBuffer, totalSamples, SAMPLE_RATE, &(recWave.psRamFile_Size));
   xQueueSend(chatPrompt_Queue_H, &recWave, pdTICKS_TO_MS(250));
+
   mtb_End_This_Service(thisServ);
   }
 //######################################################################################### */
