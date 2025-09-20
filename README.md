@@ -52,8 +52,8 @@ The firmware demonstrates how to build network-enabled visual applications such 
 
 **Build Requirements:**
 - **ESP-IDF v5.3.2** installed on macOS or Windows (via VS Code).  
-  - [Step by step installation for Windows, MacOS X, Linux Ubuntu](https://randomnerdtutorials.com/programming-esp32-esp-idf-vs-code/)
-  - [ESP-IDF VS Code Installation Guide](https://github.com/espressif/vscode-esp-idf-extension)  
+  - [Complete step-by-step installation guide for Windows, MacOS X, Linux Ubuntu](https://randomnerdtutorials.com/programming-esp32-esp-idf-vs-code/)
+  - [ESP-IDF VS-Code Installation Guide](https://github.com/espressif/vscode-esp-idf-extension)  
   - [Windows Installation Video](https://www.youtube.com/watch?v=D0fRc4XHBNk)  
 
 **Steps:**
@@ -145,7 +145,7 @@ void exampleWriteTextApp_Task(void* dApplication){
 
 // Write Fixed Text to display
   exampleFixedText.mtb_Write_String("Hello World."); // Write text in default color
-//exampleFixedText.mtb_Write_Colored_String(" in Color!", PURPLE);     // Write text in different color
+  //exampleFixedText.mtb_Write_Colored_String(" in Color!", PURPLE);     // Write text in different color
 
   while (MTB_APP_IS_ACTIVE == pdTRUE) {
 
