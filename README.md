@@ -62,9 +62,11 @@ The firmware demonstrates how to build network-enabled visual applications such 
 3. Build the project by clicking the **build icon (spanner)** in the bottom status bar.
 
 
+
+
 **Learn FreeRTOS:**
 
-Pixlpal-M1 runs on FreeRTOS. If you’ve used Arduino before but haven’t worked with an RTOS, we recommend getting familiar with FreeRTOS to make the most of this library.
+Pixlpal-M1 runs on FreeRTOS. If you’ve used Arduino before but haven’t worked with an RTOS, we recommend getting familiar with FreeRTOS to make the most of this project.
 Learn FreeRTOS by watching [this tutorial](https://www.youtube.com/watch?v=F321087yYy4&list=PLXyB2ILBXW5FLc7j2hLcX6sAGbmH0JxX8) video created by Digikey.
 You only need the Tutorials 1 to 8 to work with the Pixlpal-M1 project code.
 
