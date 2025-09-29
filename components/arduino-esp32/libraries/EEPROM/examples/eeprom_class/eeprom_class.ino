@@ -44,7 +44,7 @@ void setup() {
   uint32_t age = 47;
 
   // Write: Variables ---> EEPROM stores
-  NAMES.mtb_Write_String(0, name);
+  NAMES.writeString(0, name);
   HEIGHT.put(0, height);
   AGE.put(0, age);
   Serial.print("name: ");

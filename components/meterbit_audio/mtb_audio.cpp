@@ -135,7 +135,7 @@ void audioProcessing_Task(void *d_Service){
     // now reading the I2S input stream (with NEW <I2S_std.h>)
     size_t bytes_read = 0;
 //######################################################################################################################
-  mtb_Start_This_Service(mtb_Usb_Audio_Sv);
+  //mtb_Start_This_Service(mtb_Usb_Audio_Sv);
   while (MTB_SERV_IS_ACTIVE == pdTRUE){
 
   //****** MIC CODE LOOP STARTS HERE ************************************************************************************************************ */  
@@ -189,7 +189,7 @@ void audioProcessing_Task(void *d_Service){
 }
 
 //######################################################################################################################
-  mtb_End_This_Service(mtb_Usb_Audio_Sv);
+  //mtb_End_This_Service(mtb_Usb_Audio_Sv);
 //###################################################################################################################### 
   delete mtb_audioPlayer;
   vQueueDelete(audioTextInfo_Q); audioTextInfo_Q = NULL; //The Queue remains active for the next audio service. This prevents apps such as the Internet Radio from crashing.
@@ -418,14 +418,14 @@ void audio_eof_stream(const char* info){     // The webstream comes to an end
     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
 } 
 
-void audio_process_i2s(int16_t* outBuff, uint16_t validSamples, uint8_t bitsPerSample, uint8_t channels, bool *continueI2S){ // record audiodata or send via BT
-  uac_host_device_write(s_spk_dev_handle, (uint8_t*)outBuff, validSamples * 2, 1);
-  // memcpy(AudioSamplesTransport.audioBuffer, outBuff, (size_t)validSamples);
-  // AudioSamplesTransport.audioSampleLength_bytes = validSamples;
-  // xSemaphoreGive(audio_Data_Collected_Sem_H);
-  ESP_LOGI(TAG, "Bits PerSample: %d,  No of channels: %d, no of valid samples %d\n", bitsPerSample, channels, validSamples);
-   *continueI2S = true;
-}
+// void audio_process_i2s(int16_t* outBuff, uint16_t validSamples, uint8_t bitsPerSample, uint8_t channels, bool *continueI2S){ // record audiodata or send via BT
+//   uac_host_device_write(s_spk_dev_handle, (uint8_t*)outBuff, validSamples * 2, 1);
+//   memcpy(AudioSamplesTransport.audioBuffer, outBuff, (size_t)validSamples);
+//   AudioSamplesTransport.audioSampleLength_bytes = validSamples;
+//   xSemaphoreGive(audio_Data_Collected_Sem_H);
+//   ESP_LOGI(TAG, "Bits PerSample: %d,  No of channels: %d, no of valid samples %d\n", bitsPerSample, channels, validSamples);
+//    *continueI2S = true;
+// }
 
 // void audio_id3image(File& file, const size_t pos, const size_t size){ //ID3 metadata image
 

@@ -19,7 +19,7 @@ struct ArrayDeleter {
 template<typename T>
 struct PointerDeleter {
     void operator()(T* ptr) {
-        delete ptr;
+        //delete ptr;
     }
 };
 
