@@ -86,7 +86,7 @@ extern QueueHandle_t audioTextInfo_Q;
 extern SemaphoreHandle_t dac_Start_Sem_H;
 
 extern void audioProcessing_Task(void *params);
-extern void usbSpeakerProcess_Task(void *params);
+//extern void usbSpeakerProcess_Task(void *params);
 extern void audioVisualizer();
 //extern esp_err_t _audio_player_write_fn(void *audio_buffer, size_t len, size_t *bytes_written, uint32_t timeout_ms);
 
@@ -102,7 +102,7 @@ extern void init_Mic_DAC_Audio_Processing_Peripherals(void);
 extern void de_init_Mic_DAC_Audio_Processing_Peripherals(void);
 extern void initAudioVisualPattern(void);
 extern void deInitAudioVisualPattern(void);
-
+extern void mtb_Play_USB_Audio_Samples(void*, size_t);
 
 class MTB_Audio {
     public:
