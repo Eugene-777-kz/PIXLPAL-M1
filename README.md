@@ -20,9 +20,9 @@ The firmware demonstrates how to build network-enabled visual applications such 
 - **Rich Graphics Capabilities** – Draw text, shapes, GIF, PNG, and SVG images.
 - **Connectivity** – Wi-Fi for internet access, BLE for remote control and configuration.
 - **Audio Processing** – Microphone input and DAC audio output via I2S (`ESP32-audioI2S` by schreibfaul1).
-- **USB-OTG/CDC** – Read/write USB flash drives.
+- **USB-OTG/CDC** – Read/write USB flash drives, add input and output devices e.g. usb mouse, speakers etc.
 - **Dual OTA Update Modes**:  
-  1. From GitHub releases  
+  1. From GitHub releases (online/remote) 
   2. From USB flash drive (offline)
 - **Rotary Encoder Control** – Multi-functional input (`ebtn` by saawsm).
 - **MQTT Support** – Integrated via the `PicoMQTT` library by Mlesniew.
@@ -45,6 +45,8 @@ The firmware demonstrates how to build network-enabled visual applications such 
   iOS Notifications, Google & Outlook Calendars, News RSS, OpenWeather, and World Clock.
 - BLE Central mode for wireless sensor integration.
 - Addition of BOM to hardware design files.
+- Integration of Home Assistant using ESPHome module
+- Integration of ESP Matter SDK 
 
 ---
 

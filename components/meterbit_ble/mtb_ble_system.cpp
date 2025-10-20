@@ -12,6 +12,7 @@
 #include "string.h"
 #include "cJSON.h"
 #include "nvs.h"
+#include "esp_sntp.h"
 
 #include "Arduino.h"
 #include "ArduinoJson.h"
@@ -117,11 +118,14 @@ void system_Time_Zone(JsonDocument& dCommand){
   String notifyText = "TIME ZONE SET TO - " + cityName;
   notifyText.toUpperCase();
   statusBarNotif.mtb_Scroll_This_Text(notifyText, WHITE);
-  statusBarNotif.mtb_Scroll_This_Text("CHANGES APPLY IN 5 SEC.", YELLOW);
+  //statusBarNotif.mtb_Scroll_This_Text("CHANGES APPLY IN 5 SEC.", YELLOW);
 
   timeZone.toCharArray(ntp_TimeZone, sizeof(ntp_TimeZone));
+  setenv("TZ", ntp_TimeZone, 1);
+  tzset();
+  Mtb_Applications::currentRunningApp->elementRefresh = true;
   mtb_Write_Nvs_Struct("ntp TimeZone", ntp_TimeZone, sizeof(ntp_TimeZone));
-  mtb_Start_This_Service(sntp_Time_Sv);
+  //mtb_Start_This_Service(sntp_Time_Sv);
   bleSettingsComSend(mtb_System_Settings_Route, success);
 }
 //**06*********************************************************************************************************************

@@ -44,18 +44,22 @@ void studioLight_App_Task(void* dApplication){
 
     xSemaphoreGive(studioLightMode_Sem_H);      // This line of code is need to make the loop below execute once for the first time.
 
+    uint16_t cycleClockPeriodCounter = 0;
+
     while (MTB_APP_IS_ACTIVE == pdTRUE){
-        if(xSemaphoreTake(studioLightMode_Sem_H, pdMS_TO_TICKS(100)) == pdTRUE){
+        if(xSemaphoreTake(studioLightMode_Sem_H, pdMS_TO_TICKS(100)) == pdTRUE || studioLightsInfo.studioLightColorMode == CYCLE_MODE){
             if(studioLightsInfo.studioLightColorMode == FULLSCREEN_MODE){
                 dma_display->fillScreen(studioLightsInfo.studioLightColor[0]);
             }else if (studioLightsInfo.studioLightColorMode == HALFSCREEN_MODE){
                 dma_display->fillRect(0, 0, MATRIX_WIDTH/2, MATRIX_HEIGHT, studioLightsInfo.studioLightColor[0]);
                 dma_display->fillRect(MATRIX_WIDTH/2, 0, MATRIX_WIDTH/2, MATRIX_HEIGHT, studioLightsInfo.studioLightColor[1]);
             }else if (studioLightsInfo.studioLightColorMode == CYCLE_MODE){
+                cycleClockPeriodCounter = studioLightsInfo.studioLightDuration;
                 static uint8_t colorIndex = 0;
                 dma_display->fillScreen(studioLightsInfo.studioLightColor[colorIndex]);
                 colorIndex++;
                 if(colorIndex >= 5) colorIndex = 0;
+                while (cycleClockPeriodCounter-->0 && MTB_APP_IS_ACTIVE == pdTRUE && uxSemaphoreGetCount(studioLightMode_Sem_H) < 1) delay(100);
             }
         }
     }
@@ -132,11 +136,11 @@ void setStudioLightMode(JsonDocument& dCommand){
 
 void setStudioLightDuration(JsonDocument& dCommand){
     uint8_t cmdNumber = dCommand["app_command"];
-    uint16_t duration = dCommand["duration"];
+    uint16_t duration = dCommand["dInterval"];
 
     printf("Instruction 3 has been received.\n");
+    studioLightsInfo.studioLightDuration = duration * 10;
     xSemaphoreGive(studioLightMode_Sem_H);
-    studioLightsInfo.studioLightDuration = duration;
     mtb_Write_Nvs_Struct("studioLight", &studioLightsInfo, sizeof(StudioLight_Data_t));
     mtb_Ble_App_Cmd_Respond_Success(studioLightAppRoute, cmdNumber, pdPASS);
 }
