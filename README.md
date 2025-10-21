@@ -45,7 +45,7 @@ The firmware demonstrates how to build network-enabled visual applications such 
   iOS Notifications, Google & Outlook Calendars, News RSS, OpenWeather, and World Clock.
 - BLE Central mode for wireless sensor integration.
 - Addition of BOM to hardware design files.
-- Integration of Home Assistant using ESPHome module
+- Integration of Home Assistant using MQTT
 - Integration of ESP Matter SDK 
 
 ---
