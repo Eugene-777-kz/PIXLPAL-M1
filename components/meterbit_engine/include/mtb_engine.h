@@ -320,6 +320,7 @@ extern Mtb_Applications_StatusBar* stopWatch_App;               // App Communica
 // News and Messages
 extern Mtb_Applications_StatusBar *googleNews_App;              // App Communication Route: 1/0 .... Replace this with google news app. Find api in Rapid API.
 extern Mtb_Applications_StatusBar *rssNewsApp;                  // App Communication Route: 1/1
+extern Mtb_Applications_StatusBar *newsAPI_App;                 // App Communication Route: 1/2
 
 // Calendars
 extern Mtb_Applications_StatusBar *google_Calendar_App;         // App Communication Route: 2/0

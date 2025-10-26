@@ -107,7 +107,6 @@ extern "C" void app_main(){
     // Initialize Wifi
     mtb_Wifi_Init();
 
-
     // Launch the Last Executed App or Launch a particular App after boot-up
     // mtb_General_App_Lunch(currentApp);
     mtb_Launch_This_App(exampleWriteText_App);
@@ -117,12 +116,12 @@ extern "C" void app_main(){
 
     // While Loop prints available Internal SRAM every 2 seconds
     while (1){
+
     // Get the total free size of internal SRAM
     free_sram = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
 
     // Print the free SRAM size
     ESP_LOGI(TAG, "############ Free Internal SRAM: %zu bytes\n", free_sram);
-    //ESP_LOGI(TAG, "Memory: Free %dKiB Low: %dKiB\n", (int)xPortGetFreeHeapSize()/1024, (int)xPortGetMinimumEverFreeHeapSize()/1024);
 
     // delay 2 seconds
     delay(2000);
@@ -175,6 +174,11 @@ void exampleWriteTextApp_Task(void* dApplication){
 <p align="center">
   <img src="https://github.com/Meterbit/PIXLPAL-M1/blob/af65b201861f3fa28d05fecc5947d0f03bc81e3b/Pixlpal%20Schematic%20-%20BOM%20-%20Enclosure%20files/Pixlpal-M1%20Schematic.png" alt="Pixlpal Control Schematic">
 </p>
+
+## Support Pixlpal Project
+
+The Pixlpal AIoT Display is being hosted by the crowd funding platform Crowd Supply. The pre-launch campaign is live and you can use this medium to
+support the project by becoming a backer. If you wish to support this project, simply visit the [pre-launch page](https://www.crowdsupply.com/meterbit-cybernetics/pixlpal) and subscribe to be notified when the crowd funding campaign goes live. Thanks for the anticipated support....!!!
 
 ## Licenses
 

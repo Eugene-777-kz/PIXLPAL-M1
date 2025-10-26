@@ -20,6 +20,7 @@ idf_component_register(
                     App_Meterbit_Internet_Radio
                     App_Meterbit_Live_Football
                     App_Meterbit_Music_Player
+                    App_Meterbit_News_API
                     App_Meterbit_OpenMeteo
                     App_Meterbit_OpenWeather
                     App_Meterbit_Outlook_Cal

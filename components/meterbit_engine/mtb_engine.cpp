@@ -575,6 +575,7 @@ void mtb_Msg_App_Lunch(uint16_t dAppNumber){
     switch(dAppNumber){
         case 0: mtb_Launch_This_App(googleNews_App); break;
         case 1: mtb_Launch_This_App(rssNewsApp); break;
+        case 2: mtb_Launch_This_App(newsAPI_App); break;
 
         default: ESP_LOGI(TAG, "No Apps to Lunch.\n");
             break;
