@@ -57,6 +57,7 @@ void  pixAnimClock_App_Task(void* dApplication){
   //************************************************************************************************************************ */
   ESP_LOGW(TAG, "THE PROGRAM GOT TO THIS POINT 0\n");
   mtb_Read_Nvs_Struct("Clock Cols", &clk_Updt, sizeof(Clock_Colors));
+  mtb_Read_Nvs_Struct("ntp TimeZone", ntp_TimeZone, sizeof(ntp_TimeZone));
   ESP_LOGW(TAG, "THE PROGRAM GOT TO THIS POINT 1\n");
   Mtb_FixedText_t hr_min_Obj(52, 26, Terminal10x17, clk_Updt.hourMinColour);
   Mtb_FixedText_t sec_Obj(102, 26, Terminal6x8, clk_Updt.secColor);

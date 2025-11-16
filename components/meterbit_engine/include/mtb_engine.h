@@ -175,6 +175,7 @@ public:
     bool elementRefresh;                                            // Refresh the various elements/components displayed onscreen by the app.
     uint8_t app_is_Running = pdFALSE;                               // This is used to check if the application is running or not. It is set to pdTRUE when the application is running, and pdFALSE when it is not running.
     uint8_t showStatusBarClock = pdFALSE;                           // This is used to check if the status bar clock should be shown or not. It is set to pdTRUE when the status bar clock should be shown, and pdFALSE when it should not be shown.
+    uint8_t showStatusBarCalendar = pdFALSE;                        // This is used to check if the status bar calendar should be shown or not. It is set to pdTRUE when the status bar calendar should be shown, and pdFALSE when it should not be shown.
 
     Mtb_Do_Prev_App_t action_On_Prev_App = DESTROY_PREVIOUS_APP;    // This is used to check what action should be taken on the previous application when a new application is launched. It can be set to SUSPEND_PREVIOUS_APP, DESTROY_PREVIOUS_APP, or IGNORE_PREVIOUS_APP.
 
@@ -255,7 +256,8 @@ extern void mtb_General_App_Lunch(Mtb_CurrentApp_t);
 
 // Supporting Apps and Tasks
 extern TaskHandle_t statusBarClock_H;
-extern void mtb_StatusBar_Clock(void*);
+extern void mtb_StatusBar_Clock_Task(void*);
+extern void mtb_StatusBar_Calendar_Task(void*);
 
 // All Apps Categories
 extern void mtb_Clk_Tim_AppLunch(uint16_t);
@@ -304,6 +306,7 @@ extern Mtb_Services* pixAnimClkGif_Sv;
 extern Mtb_Services* spotifyScreenUpdate_Sv;        // USES PSRAM AS TASK STACK
 extern Mtb_Services* Audio_Listening_Sv;
 extern Mtb_Services* mtb_Status_Bar_Clock_Sv;             // USES PSRAM AS TASK STACK
+extern Mtb_Services* mtb_Status_Bar_Calendar_Sv;          // USES PSRAM AS TASK STACK
 
 // All System Apps
 extern Mtb_Applications_FullScreen* usbOTA_Update_App;

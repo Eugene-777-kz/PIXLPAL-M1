@@ -28,6 +28,8 @@ void  calendarClock_App_Task(void* dApplication){
   mtb_App_Init(thisApp);
   //**************************************************************************************************************************
   mtb_Read_Nvs_Struct("Clock Cols", &clk_Updt, sizeof(Clock_Colors));
+  mtb_Read_Nvs_Struct("ntp TimeZone", ntp_TimeZone, sizeof(ntp_TimeZone));
+  
   Mtb_FixedText_t hr_min_Obj(0, 13, PT_Sans_Narrow38x34, clk_Updt.hourMinColour);
   Mtb_FixedText_t sec_Obj(105, 12, Terminal10x16, clk_Updt.secColor);
   Mtb_FixedText_t am_Pm_Obj(105, 32, Terminal10x16, clk_Updt.meridiemColor);
@@ -90,7 +92,7 @@ void  calendarClock_App_Task(void* dApplication){
 
   if(pre_Hr == 0){
 	pre_Hr = 12;
-  sprintf( rtc_Hr_Min, "%d", pre_Hr );
+  sprintf(rtc_Hr_Min, "%d", pre_Hr);
 	AM_or_PM = 'A';
 	}
 	

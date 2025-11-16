@@ -127,9 +127,8 @@ typedef struct{
     void writeXter(uint16_t a, uint16_t x, uint16_t y);
 
     // USER TEXT FUNCTIONS
-    uint16_t mtb_Write_String(const char *myString);    // Write a char array string to the display
-    uint16_t mtb_Write_String(String myString);         // Write a String object to the display
-
+    virtual uint16_t mtb_Write_String(const char *myString);    // Write a char array string to the display
+    virtual uint16_t mtb_Write_String(String myString);         // Write a String object to the display
 
     virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t){}
     virtual void mtb_Update_Panel_Segment(void){}
@@ -148,9 +147,12 @@ class Mtb_FixedText_t : public Mtb_Static_Text_t {
     static uint8_t** scratchPad;
     uint16_t color;
     uint16_t backgroundColor = BLACK;
-    virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t);
-    virtual void mtb_Update_Panel_Segment(void);
-    virtual void mtb_Clear_Panel_Segment(void);
+    virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t) override;
+    virtual void mtb_Update_Panel_Segment(void) override;
+    virtual void mtb_Clear_Panel_Segment(void) override;
+
+    virtual uint16_t mtb_Write_String(const char *myString) override {return Mtb_Static_Text_t::mtb_Write_String(myString);}
+    virtual uint16_t mtb_Write_String(String myString) override {return Mtb_Static_Text_t::mtb_Write_String(myString);}
         
     // FIXED TEXT USER FUNCTIONS ********************************************************************************
     virtual uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor);
@@ -181,6 +183,9 @@ class Mtb_FixedText_t : public Mtb_Static_Text_t {
 class Mtb_CentreText_t : public Mtb_FixedText_t {
     public:
 
+    uint16_t mtb_Write_String(const char *myString) override;    // Write a char array string to the display
+    uint16_t mtb_Write_String(String myString) override;         // Write a String object to the display
+
     // FIXED TEXT USER FUNCTIONS ********************************************************************************
     uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor);
     uint16_t mtb_Write_Colored_String(const char *myString, uint16_t dColor, uint16_t dBackgroundColor);
@@ -188,8 +193,8 @@ class Mtb_CentreText_t : public Mtb_FixedText_t {
     uint16_t mtb_Write_Colored_String(String myString, uint16_t dColor, uint16_t dBackgroundColor);
     // END OF FIXED TEXT USER FUNCTIONS *********************************************************************************************************
 
-    void mtb_Update_Panel_Segment(void){}
-    void mtb_Clear_Panel_Segment(void);
+    void mtb_Update_Panel_Segment(void) override {}
+    void mtb_Clear_Panel_Segment(void) override;
     Mtb_CentreText_t();
     Mtb_CentreText_t(uint16_t x1, uint16_t y1, const uint8_t *font = Terminal6x8, uint16_t dColor = OLIVE_GREEN, uint16_t dBackGrndColor = BLACK) : Mtb_FixedText_t(x1, y1, font,dColor,dBackGrndColor){}
 
@@ -204,7 +209,7 @@ class Mtb_CentreText_t : public Mtb_FixedText_t {
 class ScrollTextHelper_t : public Mtb_Static_Text_t {
     public:
     uint8_t ** scrollBuffer;
-    virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t);
+    virtual void mtb_Set_Pixel_Data(uint16_t, uint16_t) override;
     ScrollTextHelper_t();
     ScrollTextHelper_t(uint16_t x1, uint16_t y1, const uint8_t *font = Terminal6x8) : Mtb_Static_Text_t(x1, y1, font) { textStyle = SCROLL_TEXT_STYLE;}
 };

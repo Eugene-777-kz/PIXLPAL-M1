@@ -1,7 +1,7 @@
 
 
 idf_component_register(
-                    SRCS "mtb_status_bar_clock.cpp" "mtb_engine.cpp"
+                    SRCS "mtb_status_bar_calendar.cpp" "workerWorldFlagsFns.cpp" "mtb_status_bar_clock.cpp" "mtb_engine.cpp"
                     INCLUDE_DIRS "include"
                     REQUIRES driver esp_timer meterbit_usb meterbit_system meterbit_graphics meterbit_mqtt ArduinoJson-7xx meterbit_github PicoMQTT arduino-esp32 ebtn meterbit_wifi meterbit_ota meterbit_ble
                     

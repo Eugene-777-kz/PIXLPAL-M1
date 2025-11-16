@@ -31,7 +31,7 @@ extern "C" void app_main(){
     // Launch the Last Executed App or Launch a particular App after boot-up
     mtb_General_App_Lunch(currentApp);
     // mtb_Launch_This_App(exampleWriteText_App);
-    // mtb_Launch_This_App(studioLight_App);
+    // mtb_Launch_This_App(polygonFX_App);
 
     // Declare Variable for monitoring Free/Available internal SRAM
     size_t free_sram = 0;

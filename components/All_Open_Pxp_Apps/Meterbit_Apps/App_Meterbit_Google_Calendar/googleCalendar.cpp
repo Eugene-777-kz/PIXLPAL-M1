@@ -44,19 +44,19 @@ bool showTaskDue        = true;
 bool showTaskStatus     = true;
 bool showTaskNotes      = true;
 // ======================
-  Mtb_FixedText_t* event_Task_Name;
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Name;
   
-  Mtb_ScrollText_t* event_Task_Title_1 = new Mtb_ScrollText_t(12, 24, 113, Terminal6x8, CYAN, 10, 0xFFFF, 15000);
-  Mtb_ScrollText_t* event_Task_Title_2 = new Mtb_ScrollText_t(12, 44, 113, Terminal6x8, CYAN, 10, 0xFFFF, 15000);
+  EXT_RAM_BSS_ATTR Mtb_ScrollText_t* event_Task_Title_1;
+  EXT_RAM_BSS_ATTR Mtb_ScrollText_t* event_Task_Title_2;
 
-  Mtb_FixedText_t* event_Task_Date_1 = new Mtb_FixedText_t(11, 35, Terminal4x6, LEMON_YELLOW);
-  Mtb_FixedText_t* event_Task_Date_2 = new Mtb_FixedText_t(11, 55, Terminal4x6, LEMON_YELLOW);
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Date_1;
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Date_2;
 
-  Mtb_FixedText_t* event_Task_Time_1 = new Mtb_FixedText_t(90, 35, Terminal4x6, SANDY_BROWN);
-  Mtb_FixedText_t* event_Task_Time_2 = new Mtb_FixedText_t(90, 55, Terminal4x6, SANDY_BROWN);
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Time_1;
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Time_2;
 
-  Mtb_FixedText_t* event_Task_Status_1 = new Mtb_FixedText_t(90, 35, Terminal4x6, SANDY_BROWN);
-  Mtb_FixedText_t* event_Task_Status_2 = new Mtb_FixedText_t(80, 55, Terminal4x6, SANDY_BROWN);
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Status_1;
+  EXT_RAM_BSS_ATTR Mtb_FixedText_t* event_Task_Status_2;
  
   void fetchAllCalendarEvents(const String& accessToken);
   void fetchTasks(const String& accessToken);
@@ -92,7 +92,19 @@ void  googleCal_App_Task(void* dApplication){
   mtb_Ble_AppComm_Parser_Sv->mtb_Register_Ble_Comm_ServiceFns(link_GoogleCal, get_GoogleCal_Refresh_Token, show_GoogleCal_Events, show_GoogleCal_Tasks, show_GoogleCal_Holidays, set_GoogleCal_ThemeColor);
   mtb_App_Init(thisApp, mtb_Status_Bar_Clock_Sv);
   //**************************************************************************************************************************************************************** */
+  
+  event_Task_Title_1 = new Mtb_ScrollText_t(12, 24, 113, Terminal6x8, CYAN, 10, 0xFFFF, 15000);
+  event_Task_Title_2 = new Mtb_ScrollText_t(12, 44, 113, Terminal6x8, CYAN, 10, 0xFFFF, 15000);
 
+  event_Task_Date_1 = new Mtb_FixedText_t(11, 35, Terminal4x6, LEMON_YELLOW);
+  event_Task_Date_2 = new Mtb_FixedText_t(11, 55, Terminal4x6, LEMON_YELLOW);
+
+  event_Task_Time_1 = new Mtb_FixedText_t(90, 35, Terminal4x6, SANDY_BROWN);
+  event_Task_Time_2 = new Mtb_FixedText_t(90, 55, Terminal4x6, SANDY_BROWN);
+
+  event_Task_Status_1 = new Mtb_FixedText_t(90, 35, Terminal4x6, SANDY_BROWN);
+  event_Task_Status_2 = new Mtb_FixedText_t(80, 55, Terminal4x6, SANDY_BROWN);
+  
   String googleCalendarRefreshTokener;
   mtb_Read_Nvs_Struct("googleCalData", &userGoogleCal, sizeof(GoogleCal_Data_t));
   event_Task_Name = new Mtb_FixedText_t(20, 12, Terminal6x8, BLACK, userGoogleCal.themeColor);  
@@ -121,6 +133,20 @@ void  googleCal_App_Task(void* dApplication){
     }
 
   }
+
+  delete event_Task_Name;
+  
+  delete event_Task_Title_1;
+  delete event_Task_Title_2;
+
+  delete event_Task_Date_1;
+  delete event_Task_Date_2;
+
+  delete event_Task_Time_1;
+  delete event_Task_Time_2;
+
+  delete event_Task_Status_1;
+  delete event_Task_Status_2;
 
   mtb_End_This_App(thisApp);
 }

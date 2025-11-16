@@ -42,7 +42,7 @@ void studioLight_App_Task(void* dApplication){
 
     mtb_Read_Nvs_Struct("studioLight", &studioLightsInfo, sizeof(StudioLight_Data_t));
 
-    xSemaphoreGive(studioLightMode_Sem_H);      // This line of code is need to make the loop below execute once for the first time.
+    xSemaphoreGive(studioLightMode_Sem_H);      // This line of code is needed to make the loop below execute once for the first time.
 
     uint16_t cycleClockPeriodCounter = 0;
 

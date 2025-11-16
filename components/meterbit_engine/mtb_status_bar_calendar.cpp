@@ -8,24 +8,23 @@
 #include "mtb_engine.h"
 #include "mtb_cal_clk.h"
 
-EXT_RAM_BSS_ATTR TaskHandle_t statusBarClock_H = NULL;
+EXT_RAM_BSS_ATTR TaskHandle_t statusBarCalendar_H = NULL;
 
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Status_Bar_Clock_Sv = new Mtb_Services(mtb_StatusBar_Clock_Task, &statusBarClock_H, "StatBar Clk Serv.", 4096, 1, pdTRUE);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Status_Bar_Calendar_Sv = new Mtb_Services(mtb_StatusBar_Calendar_Task, &statusBarCalendar_H, "StatBar Cal Serv.", 4096, 1, pdTRUE);
 
-void mtb_StatusBar_Clock_Task(void* dService){
+void mtb_StatusBar_Calendar_Task(void* dService){
   Mtb_Services *thisServ = (Mtb_Services *)dService;
-  Mtb_Applications::currentRunningApp->showStatusBarClock = pdTRUE;
+  Mtb_Applications::currentRunningApp->showStatusBarCalendar = pdTRUE;
     uint8_t timeRefresh = pdTRUE;
     mtb_Read_Nvs_Struct("Clock Cols", &clk_Updt, sizeof(Clock_Colors));
-    Mtb_FixedText_t hr_min_Obj(52, 1, Terminal6x8, clk_Updt.hourMinColour);
+    Mtb_FixedText_t weekday_Obj(35, 1, Terminal6x8, clk_Updt.weekDayColour);
     Mtb_FixedText_t mnth_day_Obj(93, 1, Terminal6x8, clk_Updt.dateColour);
-    char rtc_Hr_Min[10] = {0};
+    char rtc_WkDay[15] = {0};
     char rtc_Dated[10] = {0};
     time_t present = 0;
     struct tm *now = nullptr;
-//    char AM_or_PM;
-    uint8_t pre_Hr = 111;
-    uint8_t pre_Min = 111;
+
+    uint8_t pre_WeekDay = 111;
     uint8_t pre_Day = 111;
     uint8_t pre_Month = 111;
 
@@ -37,49 +36,41 @@ void mtb_StatusBar_Clock_Task(void* dService){
   if((now->tm_year) < 124){
     //ESP_LOGI(TAG, "Time is not correct. The year is: %d\n", now->tm_year);
   }else{
-//*************************************************
-  if (pre_Hr != now->tm_hour || timeRefresh){
-	pre_Hr = now->tm_hour;
 
-    if(pre_Hr == 0){
-      rtc_Hr_Min[0] = '0';
-      rtc_Hr_Min[1] = '0';
-    }
-    else if (pre_Hr < 10){
-		rtc_Hr_Min[0] = '0';
-    sprintf(&rtc_Hr_Min[1], "%d", pre_Hr);
-		}
-    else{
-        sprintf( rtc_Hr_Min, "%d", pre_Hr );
-    }	
-	// else if (pre_Hr == 12){
-  //   sprintf( rtc_Hr_Min, "%d", pre_Hr);
-	// }
-	// else if(pre_Hr > 12 && pre_Hr < 22){
-	// 	pre_Hr -= 12;
-	// 	rtc_Hr_Min[0] = '0';
-  //   sprintf(&rtc_Hr_Min[1], "%d", pre_Hr );
-	// 	}
-	// else { pre_Hr -= 12;
-  //   sprintf( rtc_Hr_Min, "%d", pre_Hr );
-	// 	}
-    pre_Hr = now->tm_hour;        // Code is placed here because pre_Hr was changed.
+if(pre_Day != now->tm_mday  || timeRefresh){
+
+  pre_WeekDay = now->tm_wday;
+  pre_Day = now-> tm_mday;
+  
+  switch (pre_WeekDay){
+  case SUN: strcpy(rtc_WkDay, "Sunday");
+    break;
+  case MON: strcpy(rtc_WkDay, "Monday");
+    break;
+  case TUE: strcpy(rtc_WkDay, "Tuesday");
+    break;
+  case WED: strcpy(rtc_WkDay, "Wednesday");
+    break;
+  case THU: strcpy(rtc_WkDay, "Thursday");
+    break;
+  case FRI: strcpy(rtc_WkDay, "Friday");
+    break;
+  case SAT: strcpy(rtc_WkDay, "Saturday");
+    break;
+    default: strcpy(rtc_WkDay, "ERR");
   }
-
-  	if (pre_Min != now->tm_min || timeRefresh){
-  pre_Min = now->tm_min;
-
-  if (pre_Min < 10){
-		rtc_Hr_Min[3] = '0';
-    sprintf(&rtc_Hr_Min[4], "%d", pre_Min);
-		} else {
-    sprintf(&rtc_Hr_Min[3], "%d", pre_Min);
+  if (pre_Day < 10){
+		rtc_Dated[0] = '0';
+    sprintf(&rtc_Dated[1], "%d",pre_Day);
 	}
-  rtc_Hr_Min[2] = ':';
-
-  rtc_Hr_Min[5] = 0;
-  hr_min_Obj.mtb_Write_String(rtc_Hr_Min);
-}
+	else {
+    sprintf(rtc_Dated, "%d", pre_Day );
+	}
+    rtc_Dated[2] = ' ';
+    rtc_Dated[6] = ' ';
+    rtc_Dated[9] = 0;
+    weekday_Obj.mtb_Write_String(rtc_WkDay);
+  }
 
 if (pre_Month != now->tm_mon  || timeRefresh){
 pre_Month = now->tm_mon;
@@ -131,7 +122,6 @@ if(pre_Day != now->tm_mday  || timeRefresh){
 
   }
   if(xQueueReceive(clock_Update_Q, &clk_Updt, 0)){
-  hr_min_Obj.color = clk_Updt.hourMinColour;
   timeRefresh = pdTRUE;
   } else{
     //ESP_LOGI(TAG, "Hello Status Clock\n");

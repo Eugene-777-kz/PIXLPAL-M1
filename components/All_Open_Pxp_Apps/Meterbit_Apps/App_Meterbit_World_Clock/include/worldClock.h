@@ -11,15 +11,13 @@
 static const char worldClockAppRoute[] = "0/2";
 
 struct WorldClock_Data_t {
-String city1;
-String city2;
-String city3;
-String city4;
-String city5;
-String city6;
+char worldCapitals[5][50];
+char worldTimeZones[5][50];
+char firstCountryName[50];
+uint16_t worldColors[5];
+uint8_t worldClockMode;
 };
 
-extern WorldClock_Data_t worldClockCities;
 extern TaskHandle_t worldClock_Task_H;
 extern void worldClock_App_Task(void *arguments);
 

@@ -33,7 +33,7 @@ RadioStation_t currentRadioStation = {
   };
 
 bool radioPlayReady = true;
-static const char favouriteRadioStationsFilePath[] = "/radioStations/favSta.csv";
+//static const char favouriteRadioStationsFilePath[] = "/radioStations/favSta.csv";
 //String posterCurrentStation = "/radioStations/currentPoster.png";
 //************************************************************* */
 void selectRadioStations(JsonDocument&); // This function is called from the App to select a radio station.
@@ -44,8 +44,8 @@ void updateSavedStations(JsonDocument&);
 //void station_Poster_Download_Task(void *);
 void intRadioButtonControl(button_event_t);
 //String getStationInfoAsJson(int);
-int searchStationInFavorites(const String&);
-bool decodeSaveBase64(String &base64Image, String &fileName);
+//int searchStationInFavorites(const String&);
+//bool decodeSaveBase64(String &base64Image, String &fileName);
 //void station_Poster_Download(void);
 
 EXT_RAM_BSS_ATTR Mtb_Applications_StatusBar *internetRadio_App = new Mtb_Applications_StatusBar(internetRadio_App_Task, &internet_Radio_Task_H, "Int Rad Task", 10240, pdTRUE);
