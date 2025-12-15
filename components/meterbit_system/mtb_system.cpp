@@ -17,8 +17,8 @@ static const char TAG[] = "mtb_system";
 EXT_RAM_BSS_ATTR TaskHandle_t encoder_Task_H = NULL;
 EXT_RAM_BSS_ATTR TaskHandle_t button_Task_H = NULL;
 
-EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *encoder_Task_Sv = new Mtb_Service_With_Fns(encoder_Task, &encoder_Task_H, "Encoder Task", 10240, 0, pdTRUE, 1); // Review this task Stack Size
-EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *button_Task_Sv = new Mtb_Service_With_Fns(button_Task, &button_Task_H, "Button Task", 10240, 0, pdTRUE, 1); // Review this task Stack Size
+EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *encoder_Task_Sv = new Mtb_Service_With_Fns(encoder_Task, &encoder_Task_H, "Encoder Task", 6144, 0, pdTRUE, 1); // Review this task Stack Size
+EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *button_Task_Sv = new Mtb_Service_With_Fns(button_Task, &button_Task_H, "Button Task", 6144, 0, pdTRUE, 1); // Review this task Stack Size
 
 button_t pressButton{
   .pin = (gpio_num_t)GPIO_NUM_0,
@@ -69,7 +69,6 @@ void button_Task (void* dService){
 void mtb_System_Init(void){
     if(nvsAccessQueue == NULL) nvsAccessQueue = xQueueCreate(20, sizeof(NvsAccessParams_t));
     if(files2Download_Q == NULL) files2Download_Q = xQueueCreate(20, sizeof(File2Download_t));
-    if(freeServAndAppPSRAM_Q == NULL) freeServAndAppPSRAM_Q = xQueueCreate(26, sizeof(void*));
     if(nvsAccessComplete_Sem == NULL) nvsAccessComplete_Sem = xSemaphoreCreateBinary();
     //if(bleRestoreTimer_H == NULL) bleRestoreTimer_H = xTimerCreate("bleRstoreTim", pdMS_TO_TICKS(1000), pdFALSE, NULL, bleRestoreTimerCallBkFn);
     if(Mtb_FixedText_t::scratchPad == nullptr){
@@ -95,5 +94,4 @@ void mtb_System_Init(void){
 	mtb_Read_Nvs_Struct("dev_Volume", &deviceVolume, sizeof(uint8_t));
     mtb_Text_Scrolls_Init();
     if(appLuncherQueue == NULL) appLuncherQueue = xQueueCreate(4, sizeof(Mtb_Applications*));
-    mtb_Start_This_Service(freeServAndAppPSRAM_Sv);
 }

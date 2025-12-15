@@ -30,7 +30,6 @@ EXT_RAM_BSS_ATTR TaskHandle_t nvsAccess_Task_Handle = NULL;
 EXT_RAM_BSS_ATTR TaskHandle_t freeServAndAppPSRAM_Handle = NULL;
 EXT_RAM_BSS_ATTR QueueHandle_t appLuncherQueue = NULL;
 EXT_RAM_BSS_ATTR QueueHandle_t nvsAccessQueue = NULL;
-EXT_RAM_BSS_ATTR QueueHandle_t freeServAndAppPSRAM_Q = NULL;
 EXT_RAM_BSS_ATTR SemaphoreHandle_t nvsAccessComplete_Sem = NULL;
 EXT_RAM_BSS_ATTR QueueHandle_t running_App_BLECom_Queue = NULL;
 //EXT_RAM_BSS_ATTR TimerHandle_t bleRestoreTimer_H = NULL;
@@ -40,7 +39,6 @@ void (*buttonFn_ptr)(button_event_t) = buttonDoNothing;
 
 EXT_RAM_BSS_ATTR Mtb_Services *app_Luncher_Task_Sv = new Mtb_Services(appLuncherTask, &appLuncher_Task_H, "App Luncher Task", 4096, 3);
 EXT_RAM_BSS_ATTR Mtb_Services *read_Write_NVS_Sv = new Mtb_Services(nvsAccessTask, &nvsAccess_Task_Handle, "NVS Access Tsk", 4096, 3);
-EXT_RAM_BSS_ATTR Mtb_Services *freeServAndAppPSRAM_Sv = new Mtb_Services(freeServAndAppPSRAM_Task, &freeServAndAppPSRAM_Handle, "Free AppServPSRAM", 4096, 3, pdTRUE);
 
 EXT_RAM_BSS_ATTR Mtb_Applications* Mtb_Applications::otaAppHolder = nullptr;
 EXT_RAM_BSS_ATTR Mtb_Applications* Mtb_Applications::currentRunningApp = nullptr;
@@ -91,21 +89,10 @@ void mtb_Start_This_Service(Mtb_Services* dService){
     BaseType_t result;
     if(*(dService->serviceT_Handle_ptr) == NULL) {  // Prevents the service from being started multiple times
         dService->service_is_Running = pdTRUE;
-        if(dService->usePSRAM_Stack == pdFALSE) {
             result = xTaskCreatePinnedToCore(dService->service, dService->serviceName, dService->stackSize, dService, dService->servicePriority, dService->serviceT_Handle_ptr, dService->serviceCore);
             //if(result == pdPASS) ESP_LOGI(TAG, "Task %s successfully launched\n", dService->serviceName);
             if(result != pdPASS) ESP_LOGE(TAG, "Task %s failed to launch with error code: %d\n", dService->serviceName, result);
-        } else {
-            dService->task_stack = (StackType_t *)heap_caps_malloc(dService->stackSize * sizeof(StackType_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-            dService->tcb_static = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
-            if (dService->task_stack == NULL || dService->tcb_static == NULL){ 
-                ESP_LOGE(TAG, "Failed to allocate task/tcb service stack in PSRAM for service: %s\n", dService->serviceName);
-                return;
-            }
-            // Create the task with the stack in PSRAM
-            *dService->serviceT_Handle_ptr = xTaskCreateStaticPinnedToCore(dService->service, dService->serviceName, dService->stackSize, dService, dService->servicePriority, dService->task_stack, dService->tcb_static, dService->serviceCore);
-        }
-    }
+}
 }
 
 void mtb_Resume_This_Service(Mtb_Services* dService){
@@ -114,18 +101,6 @@ void mtb_Resume_This_Service(Mtb_Services* dService){
 
 void mtb_Suspend_This_Service(Mtb_Services* dService){
     vTaskSuspend(*(dService->serviceT_Handle_ptr));
-}
-
-void freeServAndAppPSRAM_Task(void * dService){
-    Mtb_Services *thisService = (Mtb_Services *)dService;
-    void * dMemorySet = nullptr;
-    while (1){
-    delay(1000); // Wait for 1 seconds before freeing memory of services and Mtb_Applications whose TCB and Stack were allocated in PSRAM.
-    if(xQueueReceive(freeServAndAppPSRAM_Q, &dMemorySet, pdMS_TO_TICKS(500))) heap_caps_free(dMemorySet);
-    }
-    //mtb_End_This_Service(thisService);
-    *(thisService->serviceT_Handle_ptr) = NULL;
-    vTaskDelete(NULL);
 }
 
 void appLuncherTask(void * dService){
@@ -181,37 +156,11 @@ void nvsAccessTask(void * dService){
 }
 
 bool Mtb_Applications::appRunner(){
-    if (usePSRAM_Stack == pdFALSE) {
         // Dynamic task creation
         if (xTaskCreatePinnedToCore(application, appName, stackSize, this, appPriority, appHandle_ptr, appCore) != pdPASS) {
             ESP_LOGE(TAG, "Failed to create application task in INTERNAL DRAM: %s\n", appName);
             return false; // Task creation failed
         }
-        //ESP_LOGI(TAG, "DSRAM APP CREATED.\n");
-        //ESP_LOGI(TAG, "INTERNAL DRAM APP CREATED.\n");
-    } else {
-        // Allocate stack and TCB in PSRAM/internal memory
-        task_stack = (StackType_t *)heap_caps_malloc(stackSize * sizeof(StackType_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-        tcb_static = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
-        if (task_stack == NULL || tcb_static == NULL) {
-            // Clean up allocated memory if partial allocation occurs
-            if (task_stack) heap_caps_free(task_stack);
-            if (tcb_static) heap_caps_free(tcb_static);
-            ESP_LOGE(TAG, "Failed to allocate task/tcb application stack in PSRAM\n"); 
-            return false; // Allocation failed
-        }
-        
-        // Create the task with the allocated stack and TCB
-        *appHandle_ptr = xTaskCreateStaticPinnedToCore(application, appName, stackSize, this, appPriority, task_stack, tcb_static, appCore);
-        if (*appHandle_ptr == NULL) {
-            // Task creation failed, free allocated memory
-            heap_caps_free(task_stack);
-            heap_caps_free(tcb_static);
-            ESP_LOGE(TAG, "Failed to create application stack in PSRAM: %s\n", appName);
-            return false;
-        }
-        ESP_LOGI(TAG, "PSRAM APP CREATED.\n");
-    }
     ESP_LOGI(TAG, "Application %s is running on core %d\n", appName, xPortGetCoreID());
     return true; // Task creation successful
 }
@@ -286,24 +235,12 @@ void Mtb_Applications::actionOnPreviousApp(Mtb_Do_Prev_App_t dAction){
 
 void mtb_End_This_App(Mtb_Applications* dApp){
         *(dApp->appHandle_ptr) = NULL;
-        if(dApp->usePSRAM_Stack == pdTRUE){    
-            xQueueSend(freeServAndAppPSRAM_Q, &dApp->task_stack, pdMS_TO_TICKS(500));
-            xQueueSend(freeServAndAppPSRAM_Q, &dApp->tcb_static, pdMS_TO_TICKS(500));
-            dApp->task_stack = NULL;
-            dApp->tcb_static = NULL;
-        }
         //ESP_LOGI(TAG, "THIS APPLICATION HAS BEEN DELETED: %s \n", dApp->appName);
         vTaskDelete(NULL);
 }
 
 void mtb_End_This_Service(Mtb_Services* dService){
         *(dService->serviceT_Handle_ptr) = NULL;
-        if (dService->usePSRAM_Stack == pdTRUE){
-            xQueueSend(freeServAndAppPSRAM_Q, &dService->task_stack, pdMS_TO_TICKS(500));
-            xQueueSend(freeServAndAppPSRAM_Q, &dService->tcb_static, pdMS_TO_TICKS(500));
-            dService->task_stack = NULL;
-            dService->tcb_static = NULL;
-        }
         //ESP_LOGI(TAG, "THIS SERVICE HAS BEEN DELETED: %s \n", dService->serviceName);
         vTaskDelete(NULL);
 }

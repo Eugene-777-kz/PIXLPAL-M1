@@ -25,7 +25,6 @@
 extern QueueHandle_t clock_Update_Q;
 extern TaskHandle_t appLuncher_Task_H;
 extern QueueHandle_t appLuncherQueue;
-extern QueueHandle_t freeServAndAppPSRAM_Q;
 extern QueueHandle_t nvsAccessQueue;
 extern SemaphoreHandle_t nvsAccessComplete_Sem;
 extern QueueHandle_t running_App_BLECom_Queue;
@@ -50,7 +49,6 @@ struct NvsAccessParams_t{
 };
 
 extern void appLuncherTask(void *);
-extern void freeServAndAppPSRAM_Task(void *);
 extern void nvsAccessTask(void *);
 
 //**************************************************************************************************************************
@@ -275,16 +273,16 @@ extern void mtb_Miscellanous_App_Lunch(uint16_t);
 
 // System Sevices
 extern Mtb_Service_With_Fns* mtb_Ble_AppComm_Parser_Sv;
-extern Mtb_Services* ble_SetCom_Parse_Sv;             // USES PSRAM AS TASK STACK
-extern Mtb_Services* beep_Buzzer_Sv;                // USES PSRAM AS TASK STACK
-//extern Mtb_Services* statusBarIconUpdate_Sv;        // USES PSRAM AS TASK STACK
+extern Mtb_Services* ble_SetCom_Parse_Sv;           
+extern Mtb_Services* beep_Buzzer_Sv;                
+//extern Mtb_Services* statusBarIconUpdate_Sv;     
 extern Mtb_Services* sntp_Time_Sv;                  
-extern Mtb_Services* app_Luncher_Task_Sv;           // USES PSRAM AS TASK STACK
-extern Mtb_Services* scroll_Tasks_Sv[];             // USES PSRAM AS TASK STACK
+extern Mtb_Services* app_Luncher_Task_Sv;           
+extern Mtb_Services* scroll_Tasks_Sv[];             
 extern Mtb_Services* read_Write_NVS_Sv;
 extern Mtb_Services* pngLocalImageDrawer_Sv;
-extern Mtb_Services* pngOnlineImageDrawer_Sv;       // USES PSRAM AS TASK STACK
-extern Mtb_Services* svgOnlineImageDrawer_Sv;       // USES PSRAM AS TASK STACK
+// extern Mtb_Services* pngOnlineImageDrawer_Sv; 
+// extern Mtb_Services* svgOnlineImageDrawer_Sv;
 extern Mtb_Services *gitHubFileDwnload_Sv;
 
 extern Mtb_Services* mtb_Dac_N_Mic_Sv;
@@ -292,21 +290,19 @@ extern Mtb_Services* mtb_Usb_Audio_Sv;
 // extern Mtb_Services* usb_Speaker_Sv;
 // extern Mtb_Services* bleControl_Sv;
 
-extern Mtb_Service_With_Fns* encoder_Task_Sv;       // USES PSRAM AS TASK STACK
-extern Mtb_Service_With_Fns* button_Task_Sv;        // USES PSRAM AS TASK STACK
-extern Mtb_Services* usb_Mass_Storage_Sv;           //
-extern Mtb_Services* freeServAndAppPSRAM_Sv;        //
-
+extern Mtb_Service_With_Fns* encoder_Task_Sv;       
+extern Mtb_Service_With_Fns* button_Task_Sv;        
+extern Mtb_Services* usb_Mass_Storage_Sv;      
 
 //*********************************************************************************** */
 // Mtb_Applications SECTION (USERS AND SYSTEM APPS)
 
 // Application Mtb_Services
 extern Mtb_Services* pixAnimClkGif_Sv;
-extern Mtb_Services* spotifyScreenUpdate_Sv;        // USES PSRAM AS TASK STACK
+extern Mtb_Services* spotifyScreenUpdate_Sv;    
 extern Mtb_Services* Audio_Listening_Sv;
-extern Mtb_Services* mtb_Status_Bar_Clock_Sv;             // USES PSRAM AS TASK STACK
-extern Mtb_Services* mtb_Status_Bar_Calendar_Sv;          // USES PSRAM AS TASK STACK
+extern Mtb_Services* mtb_Status_Bar_Clock_Sv;    
+extern Mtb_Services* mtb_Status_Bar_Calendar_Sv; 
 
 // All System Apps
 extern Mtb_Applications_FullScreen* usbOTA_Update_App;

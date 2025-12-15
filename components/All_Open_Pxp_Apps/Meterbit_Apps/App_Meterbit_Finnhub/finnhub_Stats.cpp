@@ -36,7 +36,7 @@ void add_RemoveStockSymbol(JsonDocument&);
 void setStockChangeInterval(JsonDocument&);
 void saveAPI_key(JsonDocument&);
 
-EXT_RAM_BSS_ATTR Mtb_Applications_StatusBar *finnhub_Stats_App = new Mtb_Applications_StatusBar(finhubStats_App_Task, &finhubStats_Task_H, "Finnhub Stats", 10240);
+EXT_RAM_BSS_ATTR Mtb_Applications_StatusBar *finnhub_Stats_App = new Mtb_Applications_StatusBar(finhubStats_App_Task, &finhubStats_Task_H, "Finnhub Stats", 6144);
 
 void finhubStats_App_Task(void* dApplication){
     Mtb_Applications *thisApp = (Mtb_Applications *)dApplication;
