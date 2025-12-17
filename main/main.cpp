@@ -6,7 +6,6 @@
 #include "mtb_littleFs.h"
 #include "mtb_ble.h"
 #include "esp_heap_caps.h"
-#include "projdefs.h"
 
 using namespace std;
 
@@ -32,17 +31,9 @@ extern "C" void app_main(){
     // Launch the Last Executed App or Launch a particular App after boot-up
     mtb_General_App_Lunch(currentApp);
     // mtb_Launch_This_App(exampleWriteText_App);
-    // mtb_Launch_This_App(polygonFX_App);
 
     // Declare Variable for monitoring Free/Available internal SRAM
     size_t free_sram = 0;
-
-    //printf("The Size of Mtb_ScrollText_t is: %d \n", sizeof(Mtb_ScrollText_t));
-    printf("The Size of rotary_encoder_event_t is: %d \n", sizeof(rotary_encoder_event_t));
-    printf("The Size of button_event_t is: %d \n", sizeof(button_event_t));
-    printf("The Size of NvsAccessParams_t is: %d \n", sizeof(NvsAccessParams_t));
-    printf("The Size of Mtb_Applications is: %d \n", sizeof(Mtb_Applications));
-    printf("The Size of Mtb_Services is: %d \n", sizeof(Mtb_Services));
 
     // While Loop prints available Internal SRAM every 2 seconds
     while (1){
