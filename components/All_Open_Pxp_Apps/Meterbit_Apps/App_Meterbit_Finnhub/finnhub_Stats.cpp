@@ -147,7 +147,7 @@ while (MTB_APP_IS_ACTIVE == pdTRUE){
             double openPrice24 = doc["o"];
             double previouClosePrice24 = doc["pc"];
 
-            mtb_Draw_Local_Png({"/stocks/stocksIcon_1.png", 5, 18, 2});
+            mtb_Draw_Local_Png({"/stocks/stocksIcon_1.png", 5, 18, 2});     // REVISIT -> CHECK FREQUENCY OF IMAGE DRAWING
 
             stockID_txt.mtb_Write_String(currentStocks.stockID);
             current_price_txt.mtb_Write_String(String(current_price));
@@ -156,8 +156,8 @@ while (MTB_APP_IS_ACTIVE == pdTRUE){
             priceChangePercent_tag.mtb_Write_Colored_String("G/L:", price_change_percentage_24h < 0 ? ORANGE : YELLOW_GREEN);
             priceChangePercent_txt.mtb_Write_Colored_String(String(price_change_percentage_24h) + "%", price_change_percentage_24h < 0 ? ORANGE : YELLOW_GREEN);
 
-            if(price_Diff < 0) mtb_Draw_Local_Png({"/gain_lose/lose.png", 104, 20, 1});
-            else mtb_Draw_Local_Png({"/gain_lose/gain.png", 104, 20, 1});
+            if(price_Diff < 0) mtb_Draw_Local_Png({"/gain_lose/lose.png", 104, 20, 1});     // REVISIT -> CHECK FREQUENCY OF IMAGE DRAWING
+            else mtb_Draw_Local_Png({"/gain_lose/gain.png", 104, 20, 1});                   // REVISIT -> CHECK FREQUENCY OF IMAGE DRAWING
 
             moreStockData.mtb_Scroll_This_Text("CURR: " + currentStocks.currency, CYAN);
             moreStockData.mtb_Scroll_This_Text("HIGH: " + String(high24), GREEN);
@@ -189,8 +189,7 @@ while (MTB_APP_IS_ACTIVE == pdTRUE){
 //##############################################################################################################
 
 // Streaming CSV reader: avoids readString()/substring(), minimizes heap churn.
-void readStockSymbols(const char* filename,
-                                String stockSymbols[], int& count, const int maxSymbols)
+void readStockSymbols(const char* filename, String stockSymbols[], int& count, const int maxSymbols)
 {
     count = 0;
 

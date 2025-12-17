@@ -254,13 +254,13 @@ void Mtb_Applications::actionOnPreviousApp(Mtb_Do_Prev_App_t dAction){
 
 void mtb_End_This_App(Mtb_Applications* dApp){
         *(dApp->appHandle_ptr) = NULL;
-        //ESP_LOGI(TAG, "THIS APPLICATION HAS BEEN DELETED: %s \n", dApp->appName);
+        ESP_LOGI(TAG, "THIS APPLICATION HAS BEEN DELETED: %s \n", dApp->appName);
         vTaskDelete(NULL);
 }
 
 void mtb_End_This_Service(Mtb_Services* dService){
         *(dService->serviceT_Handle_ptr) = NULL;
-        //ESP_LOGI(TAG, "THIS SERVICE HAS BEEN DELETED: %s \n", dService->serviceName);
+        ESP_LOGI(TAG, "THIS SERVICE HAS BEEN DELETED: %s \n", dService->serviceName);
         vTaskDelete(NULL);
 }
 

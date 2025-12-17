@@ -110,7 +110,7 @@ void setStudioLightColors(JsonDocument& dCommand){
     selectColor += 4;
     studioLightsInfo.studioLightColor[colorIndex] = dma_display->color565(((uint8_t)((strtol(selectColor,NULL,16) >> 16))), ((uint8_t)((strtol(selectColor,NULL,16) >> 8))),((uint8_t)((strtol(selectColor,NULL,16) >> 0))));
     xSemaphoreGive(studioLightMode_Sem_H);
-    printf("Instruction 0 has been received.\n");
+    //printf("Instruction 0 has been received.\n");
     mtb_Write_Nvs_Struct("studioLight", &studioLightsInfo, sizeof(StudioLight_Data_t));
     mtb_Ble_App_Cmd_Respond_Success(studioLightAppRoute, cmdNumber, pdPASS);
 }
@@ -121,7 +121,7 @@ void setScreenBrightness(JsonDocument& dCommand){
     panelBrightness = (tempBrightness * 2.55) + 1; // One (1) is added to make the 100% correspond to 255
     dma_display->setBrightness(panelBrightness); // 0-255
     mtb_Set_Status_RGB_LED(currentStatusLEDcolor);
-    printf("Instruction 1 has been received.\n");
+    //printf("Instruction 1 has been received.\n");
     mtb_Write_Nvs_Struct("pan_brghnss", &panelBrightness, sizeof(uint8_t));
     mtb_Ble_App_Cmd_Respond_Success(studioLightAppRoute, cmdNumber, pdPASS);
 }
@@ -130,7 +130,7 @@ void setStudioLightMode(JsonDocument& dCommand){
     uint8_t cmdNumber = dCommand["app_command"];
     uint8_t mode = dCommand["lightMode"];
 
-    printf("Instruction 2 has been received.\n");
+    //printf("Instruction 2 has been received.\n");
 
     if(mode <= CYCLE_MODE) studioLightsInfo.studioLightColorMode = mode;
     xSemaphoreGive(studioLightMode_Sem_H);
@@ -142,7 +142,7 @@ void setStudioLightDuration(JsonDocument& dCommand){
     uint8_t cmdNumber = dCommand["app_command"];
     uint16_t duration = dCommand["dInterval"];
 
-    printf("Instruction 3 has been received.\n");
+    //printf("Instruction 3 has been received.\n");
     studioLightsInfo.studioLightDuration = duration * 10;
     xSemaphoreGive(studioLightMode_Sem_H);
     mtb_Write_Nvs_Struct("studioLight", &studioLightsInfo, sizeof(StudioLight_Data_t));

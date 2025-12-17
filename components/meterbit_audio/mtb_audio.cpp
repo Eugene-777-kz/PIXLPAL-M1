@@ -746,8 +746,6 @@ void usbSpeakerProcess_Task(void *d_Service){
     s_event_queue = xQueueCreate(10, sizeof(s_event_queue_t)); // REVISIT -> Potential memory savings by putting queue in PSRAM.
     assert(s_event_queue != NULL);
 
-
-
     const usb_host_config_t host_config = {
         .skip_phy_setup = false,
         .intr_flags = ESP_INTR_FLAG_LEVEL1,
@@ -782,8 +780,7 @@ mtb_End_This_Service(thisServ);
 
 }
 
-static void uac_device_callback(uac_host_device_handle_t uac_device_handle, const uac_host_device_event_t event, void *arg)
-{
+static void uac_device_callback(uac_host_device_handle_t uac_device_handle, const uac_host_device_event_t event, void *arg){
     if (event == UAC_HOST_DRIVER_EVENT_DISCONNECTED) {
         // stop audio player first
         s_spk_dev_handle = NULL;
@@ -802,8 +799,7 @@ static void uac_device_callback(uac_host_device_handle_t uac_device_handle, cons
     xQueueSend(s_event_queue, &evt_queue, 0);
 }
 
-static void uac_host_lib_callback(uint8_t addr, uint8_t iface_num, const uac_host_driver_event_t event, void *arg)
-{
+static void uac_host_lib_callback(uint8_t addr, uint8_t iface_num, const uac_host_driver_event_t event, void *arg){
     // Send uac driver event to the event queue
     s_event_queue_t evt_queue = {};
         evt_queue.event_group = UAC_DRIVER_EVENT;
@@ -811,13 +807,13 @@ static void uac_host_lib_callback(uint8_t addr, uint8_t iface_num, const uac_hos
         evt_queue.driver_evt.iface_num = iface_num;
         evt_queue.driver_evt.event = event;
         evt_queue.driver_evt.arg = arg;
-    xQueueSend(s_event_queue, &evt_queue, 0);
+        xQueueSend(s_event_queue, &evt_queue, 0);
 }
 
 void uacSpeaker_Task(void *d_Service){
     Mtb_Services *thisServ = (Mtb_Services *)d_Service;
 
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);                              // REVISIT -> This task seems to wait indefinitely. Confirm that the service does closes when required.
     uac_host_driver_config_t uac_config = {
         .create_background_task = true,
         .task_priority = UAC_TASK_PRIORITY,
@@ -831,7 +827,7 @@ void uacSpeaker_Task(void *d_Service){
     ESP_LOGI(TAG, "UAC Class Driver installed");
     s_event_queue_t evt_queue = { .event_group = (event_group_t)0 };
         while (MTB_SERV_IS_ACTIVE == pdTRUE) {
-        if (xQueueReceive(s_event_queue, &evt_queue, portMAX_DELAY)) {
+        if (xQueueReceive(s_event_queue, &evt_queue, portMAX_DELAY)) {      // REVISIT -> This task seems to wait indefinitely. Confirm that the service does closes when required.
             if (UAC_DRIVER_EVENT ==  evt_queue.event_group) {
                 uac_host_driver_event_t event = evt_queue.driver_evt.event;
                 uint8_t addr = evt_queue.driver_evt.addr;
