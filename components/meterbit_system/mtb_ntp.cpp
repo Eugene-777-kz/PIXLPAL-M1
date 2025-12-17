@@ -10,7 +10,9 @@
 #include "mtb_engine.h"
 #include "mtb_buzzer.h"
 
+EXT_RAM_BSS_ATTR StaticQueue_t xQueueStorage_Clock_Colors;
 EXT_RAM_BSS_ATTR TaskHandle_t sntp_Time_handle = NULL;
+
 EXT_RAM_BSS_ATTR Mtb_Services *mtb_Sntp_Time_Sv = new Mtb_Services(sntp_Time_init_Task, &sntp_Time_handle, "NTP Init", 4096);
 
 void on_got_time(struct timeval* tv){
@@ -22,7 +24,10 @@ void on_got_time(struct timeval* tv){
 
 void sntp_Time_init_Task(void* dService){
   Mtb_Services *thisService = (Mtb_Services *)dService;
-  if(clock_Update_Q == NULL) clock_Update_Q = xQueueCreate(10, sizeof(Clock_Colors)); // REVISIT -> Potential memory savings by putting queue in PSRAM.
+  uint8_t *clock_Update_Q_buffer = nullptr;
+
+  if(clock_Update_Q == NULL) clock_Update_Q_buffer = (uint8_t *)heap_caps_malloc(10 * sizeof(Clock_Colors), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if(clock_Update_Q == NULL) clock_Update_Q = xQueueCreateStatic(10, sizeof(Clock_Colors), clock_Update_Q_buffer, &xQueueStorage_Clock_Colors);
 
   //ESP_LOGI(TAG, "ntp time zone is: %s \n", ntp_TimeZone);
 

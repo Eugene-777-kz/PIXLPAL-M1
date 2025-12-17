@@ -63,18 +63,15 @@ void mtb_MQTT_Server::on_disconnected(const char *client_id){
 
 void start_MQTT_Client(){
   mqttClient.begin();   // Start MQTT Client
-  //mqttClientStack_Ptr = (StackType_t *)heap_caps_malloc(4096, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-  //mqttClientTcb_psram_Ptr = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
   xTaskCreatePinnedToCore(MQTT_Client_Task, "MQTT_Cl Task", 6144, NULL, 0, &mtb_MQTT_Client_Task_Handle, 1);    // DO NOT GIVE THIS TASK A HIGH PRIORITY. Review Task Stack Size
-  // mtb_MQTT_Server_Task_Handle = xTaskCreateStaticPinnedToCore(MQTT_Client_Task, "MQTT_Client Task", 4096, NULL, 0, mqttClientStack_Ptr, mqttClientTcb_psram_Ptr, 1);
 }
 // void stop_MQTT_Server(){
 //   //Stop MQTT Broker
+//   if(mtb_MQTT_Server_Task_Handle !=NULL){
 //   mqttServer.stop();
-//   if(mtb_MQTT_Server_Task_Handle !=NULL) vTaskDelete(mtb_MQTT_Server_Task_Handle);
+//   vTaskDelete(mtb_MQTT_Server_Task_Handle);
 //   mtb_MQTT_Server_Task_Handle = NULL;
-//   // heap_caps_free(mqttServerStack_Ptr);
-//   // heap_caps_free(mqttServerTcb_psram_Ptr);
+// }
 // }
 
 void stop_MQTT_Client(){
@@ -84,14 +81,12 @@ void stop_MQTT_Client(){
   vTaskDelete(mtb_MQTT_Client_Task_Handle);
   mtb_MQTT_Client_Task_Handle = NULL;
   }
-  // heap_caps_free(mqttClientStack_Ptr);
-  // heap_caps_free(mqttClientTcb_psram_Ptr);
 }
 
 void initialize_MQTT(){
 
-  // if(config_Cmd_MQTT_queue == NULL) config_Cmd_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Potential memory savings by putting queue in PSRAM.
-  // if(app_MQTT_queue == NULL) app_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Potential memory savings by putting queue in PSRAM.
+  // if(config_Cmd_MQTT_queue == NULL) config_Cmd_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Put queue in PSRAM.
+  // if(app_MQTT_queue == NULL) app_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Put queue in PSRAM.
 
   // // Subscribe to a topic pattern and attach a callback
   // mqttServer.subscribe("#", [](const char *topic, const void *payload, size_t payload_size){
@@ -142,8 +137,11 @@ void initialize_MQTT(){
 }
 
 // void MQTT_Server_Task(void* arguments){
-//   while(1) mqttServer.loop();
-//   vTaskDelete(NULL);
+  // while(1) {
+  //   mqttServer.loop();
+  //   vTaskDelay(1);
+  // }
+  // vTaskDelete(NULL);
 // }
 
 void MQTT_Client_Task(void* arguments){

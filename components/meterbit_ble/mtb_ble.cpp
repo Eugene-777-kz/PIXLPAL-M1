@@ -13,6 +13,7 @@
 #include "mtb_engine.h"
 #include "mtb_ble.h"
 
+#define BLE_COMM_QUEUE_SIZE 6
 
 static const char TAG[] = "BLE_COMM";
 
@@ -36,7 +37,6 @@ EXT_RAM_BSS_ATTR NimBLECharacteristic *appCom_characteristic = NULL;
 EXT_RAM_BSS_ATTR mtb_BleCom_Data_Trans_t setCom_data;
 EXT_RAM_BSS_ATTR mtb_BleCom_Data_Trans_t appCom_data;
 
-int bleCom_queue_size = 6;
 EXT_RAM_BSS_ATTR String appValue;
 EXT_RAM_BSS_ATTR String setValue;
 
@@ -106,8 +106,8 @@ void mtb_Ble_Comm_Init(void){
   appValue = "0";
   setValue = "1";
 
-  if(setCom_queue == NULL) setCom_queue = xQueueCreate(bleCom_queue_size,sizeof(mtb_BleCom_Data_Trans_t));     // REVISIT -> Potential memory savings by putting queue in PSRAM.
-  if(appCom_queue == NULL) appCom_queue = xQueueCreate(bleCom_queue_size,sizeof(mtb_BleCom_Data_Trans_t));     // REVISIT -> Potential memory savings by putting queue in PSRAM.
+  if(setCom_queue == NULL) setCom_queue = xQueueCreate(BLE_COMM_QUEUE_SIZE, sizeof(mtb_BleCom_Data_Trans_t));     // REVISIT -> Potential memory savings by putting queue in PSRAM.
+  if(appCom_queue == NULL) appCom_queue = xQueueCreate(BLE_COMM_QUEUE_SIZE, sizeof(mtb_BleCom_Data_Trans_t));     // REVISIT -> Potential memory savings by putting queue in PSRAM.
 
     // Create the BLE Device
     mtb_Read_Nvs_Struct("pxpBleDevName", pxp_BLE_Name, sizeof(pxp_BLE_Name));
