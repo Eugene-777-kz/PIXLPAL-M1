@@ -74,7 +74,7 @@ void  chatGPT_App_Task(void* dApplication){
   Mtb_ScrollText_t conn2Intnt(11, 55, 116, Terminal6x8, ORANGE_RED, 15, 20000, 1000);
   thisApp->mtb_App_EncoderFn_ptr = mtb_Vol_Control_Encoder;
   thisApp->mtb_App_ButtonFn_ptr = Listen_Process_Button;
-  mtb_App_Init(thisApp, mtb_Dac_N_Mic_Sv, mtb_Status_Bar_Clock_Sv);
+  mtb_App_Init(thisApp, mtb_Audio_Out_Sv, mtb_Audio_In_Sv, mtb_Status_Bar_Clock_Sv);
   //**************************************************************************************************************************
   humanSpeech = new Mtb_ScrollText_t (11, 45, 116, Terminal6x8, CYAN, 25, 20000,  0);
   aiResponse = new Mtb_ScrollText_t(11, 55, 116, Terminal6x8, YELLOW, 15, 3, 0);
@@ -121,7 +121,7 @@ void  chatGPT_App_Task(void* dApplication){
     if(xQueueReceive(chatPrompt_Queue_H, &recordWavFile, pdMS_TO_TICKS(50)) != pdTRUE) continue;
     //delay(1000);
     // audio->connecttoFS(LittleFS, "/audio.wav"); // LittleFS
-    // mtb_Use_Mic_Or_Dac(I2S_DAC);
+    // mtb_Dac_Or_Mic_Status(ON_DAC);
     // ESP_LOGI(TAG, "In the ChatGPT App Again...\n");
     // delete_file("/littlefs/audio.wav");
     // heap_caps_free(recordWavFile.psRamFile_P);
@@ -183,7 +183,7 @@ void Listen_Process_Button(button_event_t button_Data){
     case BUTTON_PRESSED:
     if(Mtb_Applications::internetConnectStatus == true){
        if(*(mtb_Audio_Listening_Sv->serviceT_Handle_ptr) == NULL){
-        mtb_Use_Mic_Or_Dac(DISABLE_I2S_MIC_DAC); 
+        mtb_Dac_Or_Mic_Status(OFF_DAC_N_MIC); 
         xTimerStart(chatPromptTimer_H, 0);
         aiResponse->mtb_Scroll_Active(STOP_SCROLL);
         humanSpeech->mtb_Scroll_Active(STOP_SCROLL);
@@ -192,7 +192,7 @@ void Listen_Process_Button(button_event_t button_Data){
         mtb_Draw_Local_Png({"/batIcons/micRec.png", 2, 45});
       } else {
         xTimerStop(chatPromptTimer_H, 0);
-        mtb_Use_Mic_Or_Dac(DISABLE_I2S_MIC_DAC);
+        mtb_Dac_Or_Mic_Status(OFF_DAC_N_MIC);
         mtb_Audio_Listening_Sv->service_is_Running = pdFALSE;
         mtb_Draw_Local_Png({"/batIcons/aiResp.png", 2, 45});
       }} else {
@@ -248,9 +248,9 @@ void micAudioListen_Task(void* d_Service){	// Consider using hardware timer for 
   uint32_t wavSize;
   int totalSamples = 0;
   recordingVoice.mtb_Write_Colored_String("Listening...", LEMON);
-  mtb_Use_Mic_Or_Dac(I2S_MIC);
+  mtb_Dac_Or_Mic_Status(ON_MIC);
   while (MTB_SERV_IS_ACTIVE == pdTRUE && xTimerIsTimerActive(chatPromptTimer_H) == pdTRUE){
-		if(xSemaphoreTake(audio_Data_Collected_Sem_H, pdMS_TO_TICKS(5))){
+		if(xSemaphoreTake(audio_In_Data_Collected_Sem_H, pdMS_TO_TICKS(5))){
     AudioSamplesTransport.audioSampleLength_bytes /= 2;
     for (uint16_t i = 0; i < AudioSamplesTransport.audioSampleLength_bytes; i++){
       totalSampleBuffer[totalSamples++] = AudioSamplesTransport.audioBuffer[i];
@@ -280,7 +280,7 @@ void chatPrompt_TimerCallback(TimerHandle_t chatPrompt){
     }
   } else{
     mtb_Audio_Listening_Sv->service_is_Running = pdFALSE;
-    mtb_Use_Mic_Or_Dac(DISABLE_I2S_MIC_DAC);
+    mtb_Dac_Or_Mic_Status(OFF_DAC_N_MIC);
     xTimerStop(chatPromptTimer_H, 0);
   }
 }

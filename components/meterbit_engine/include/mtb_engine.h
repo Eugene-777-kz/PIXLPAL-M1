@@ -290,7 +290,8 @@ extern Mtb_Services* mtb_SvgLocal_ImageDrawer_Sv;
 // Slow Executing Services
 //extern Mtb_Services* mtb_Serv_Luncher_Sv;
 extern Mtb_Services *mtb_GitHub_File_Dwnload_Sv;
-extern Mtb_Services* mtb_Dac_N_Mic_Sv;
+extern Mtb_Services* mtb_Audio_Out_Sv;
+extern Mtb_Services* mtb_Audio_In_Sv;
 extern Mtb_Services* mtb_Usb_Audio_Sv;
 //extern Mtb_Services* UAC_Speaker_Sv;
 extern Mtb_Services* mtb_Scroll_Tasks_Sv[];   

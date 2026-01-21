@@ -9,9 +9,9 @@
 #include "Audio.h"
 
 //**************************************************************************
-#define I2S_MIC                 1
-#define I2S_DAC                 0
-#define DISABLE_I2S_MIC_DAC     0xFF
+#define ON_MIC                 1
+#define ON_DAC                 0
+#define OFF_DAC_N_MIC     0xFF
 #define MIC_DAC_MODULE_PORT     1
 
 // // Digital I/O used
@@ -47,10 +47,13 @@ enum AUDIO_TEXT_DATA_T{
     AUDIO_COMMERCIAL,
     AUDIO_ICYURL,
     AUDIO_ICY_DESCRIPTION,
+    AUDIO_ICYLOGO,
     AUDIO_LASTHOST,
     AUDIO_EOF_SPEECH,
     AUDIO_EOF_STREAM,
-    AUDIO_INFO
+    AUDIO_INFO,
+    AUDIO_SYNC_LYRICS,
+    AUDIO_LOG
 };
 
 enum AUDIO_I2S_MODE_T{
@@ -65,7 +68,7 @@ struct AudioTextTransfer_T{
     char Audio_Text_Data[500];
 };
 
-extern SemaphoreHandle_t audio_Data_Collected_Sem_H;
+extern SemaphoreHandle_t audio_In_Data_Collected_Sem_H;
 extern AUDIO_TEXT_DATA_T selectAudioText;
 
 struct RawAudioData {
@@ -80,13 +83,15 @@ extern RawAudioData AudioSamplesTransport;
 
 extern TimerHandle_t showRandomPatternTimer_H;
 extern TaskHandle_t audioProcessing_Task_H;
-extern TaskHandle_t usbSpeakerProcess_Task_H;
+extern TaskHandle_t usb_Speaker_Process_Task_H;
 extern QueueHandle_t audioProcessing_Q_H;
 extern QueueHandle_t audioTextInfo_Q;
 extern SemaphoreHandle_t dac_Start_Sem_H;
 
-extern void audioProcessing_Task(void *params);
-//extern void usbSpeakerProcess_Task(void *params);
+extern void mtb_Audio_Info(Audio::msg_t m);
+static void audio_Out_Processing_Task(void *d_Service);
+static void audio_In_Processing_Task(void *d_Service);
+//extern void usb_Speaker_Process_Task(void *params);
 extern void audioVisualizer();
 //extern esp_err_t _audio_player_write_fn(void *audio_buffer, size_t len, size_t *bytes_written, uint32_t timeout_ms);
 
@@ -96,10 +101,12 @@ extern SemaphoreHandle_t mic_Start_Sem_H;
 extern void microphoneProcessing_Task(void *);
 //extern void usb_Speaker_Task(void *);
 extern uint8_t mic_OR_dac;
-extern void mtb_Use_Mic_Or_Dac(uint8_t);
+extern void mtb_Dac_Or_Mic_Status(uint8_t);
 extern void randomPattern_TimerCallback(TimerHandle_t dHandle);
-extern void init_Mic_DAC_Audio_Processing_Peripherals(void);
-extern void de_init_Mic_DAC_Audio_Processing_Peripherals(void);
+extern void init_Audio_Out_Processing(void);
+extern void de_init_Audio_Out_Processing(void);
+extern void init_Audio_In_Processing(void);
+extern void de_init_Audio_In_Processing(void);
 extern void initAudioVisualPattern(void);
 extern void deInitAudioVisualPattern(void);
 extern void mtb_Play_USB_Audio_Samples(void*, size_t);

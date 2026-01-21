@@ -59,8 +59,8 @@ static uint8_t s_spk_curr_bits = DEFAULT_UAC_BITS;
 static uint8_t s_spk_curr_ch = DEFAULT_UAC_CH;
 static void uac_device_callback(uac_host_device_handle_t uac_device_handle, const uac_host_device_event_t event, void *arg);
 static void uac_host_lib_callback(uint8_t addr, uint8_t iface_num, const uac_host_driver_event_t event, void *arg);
-static void uacSpeaker_Task(void *d_Service);
-static void usbSpeakerProcess_Task(void *d_Service);
+static void uac_Speaker_Task(void *d_Service);
+static void usb_Speaker_Process_Task(void *d_Service);
 static void start_uac_pipeline(void);
 static void stop_uac_pipeline(void);
 static void uac_writer_task(void *arg);
@@ -102,12 +102,13 @@ typedef struct {
 // 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EXT_RAM_BSS_ATTR TimerHandle_t showRandomPatternTimer_H = NULL;
-EXT_RAM_BSS_ATTR TaskHandle_t audioProcessing_Task_H = NULL;
-EXT_RAM_BSS_ATTR TaskHandle_t usbSpeakerProcess_Task_H = NULL;
+EXT_RAM_BSS_ATTR TaskHandle_t audioOutProcessing_Task_H = NULL;
+EXT_RAM_BSS_ATTR TaskHandle_t audioInProcessing_Task_H = NULL;
+EXT_RAM_BSS_ATTR TaskHandle_t usb_Speaker_Process_Task_H = NULL;
 EXT_RAM_BSS_ATTR QueueHandle_t audioTextInfo_Q = NULL;
 EXT_RAM_BSS_ATTR SemaphoreHandle_t dac_Start_Sem_H = NULL;
 EXT_RAM_BSS_ATTR SemaphoreHandle_t mic_Start_Sem_H = NULL;
-EXT_RAM_BSS_ATTR SemaphoreHandle_t audio_Data_Collected_Sem_H = NULL;
+EXT_RAM_BSS_ATTR SemaphoreHandle_t audio_In_Data_Collected_Sem_H = NULL;
 EXT_RAM_BSS_ATTR TaskHandle_t uac_task_handle = NULL;
 
 AudioSpectVisual_Set_t audioSpecVisual_Set{
@@ -121,7 +122,7 @@ bool completedAudioMicConfig = false;
 AUDIO_I2S_MODE_T audioOutMode = CONNECT_HOST;
 Audio *audio = nullptr;
 MTB_Audio *mtb_audioPlayer = nullptr;
-uint8_t mic_OR_dac = DISABLE_I2S_MIC_DAC;
+uint8_t mic_OR_dac = OFF_DAC_N_MIC;
 
 RawAudioData AudioSamplesTransport;
 //AUDIO_TEXT_DATA_T selectAudioText = AUDIO_INFO;
@@ -132,46 +133,31 @@ uint8_t kMatrixWidth = 128; //   PANEL_WIDTH
 uint8_t kMatrixHeight = 64; // PANEL_HEIGHT
 int loopcounter = 0;
 
-EXT_RAM_BSS_ATTR Mtb_Services *UAC_Speaker_Sv = new Mtb_Services(uacSpeaker_Task, &uac_task_handle, "uac_events", 4096, 2, pdTRUE, 0);
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Usb_Audio_Sv = new Mtb_Services(usbSpeakerProcess_Task, &usbSpeakerProcess_Task_H, "Usb Aud Serv.", 4096, 5, pdTRUE, 0);
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Dac_N_Mic_Sv = new Mtb_Services(audioProcessing_Task, &audioProcessing_Task_H, "Aud Pro Serv.", 8192, 2, pdFALSE, 1);
+EXT_RAM_BSS_ATTR Mtb_Services *UAC_Speaker_Sv = new Mtb_Services(uac_Speaker_Task, &uac_task_handle, "uac_events", 4096, 2, pdTRUE, 0);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Usb_Audio_Sv = new Mtb_Services(usb_Speaker_Process_Task, &usb_Speaker_Process_Task_H, "Usb Aud Serv.", 4096, 5, pdTRUE, 0);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Audio_Out_Sv = new Mtb_Services(audio_Out_Processing_Task, &audioOutProcessing_Task_H, "Aud Out Serv.", 6144, 2, pdFALSE, 1);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Audio_In_Sv = new Mtb_Services(audio_In_Processing_Task, &audioInProcessing_Task_H, "Aud In Serv.", 4096, 2, pdFALSE, 1);
 
-void audioProcessing_Task(void *d_Service){
+void audio_Out_Processing_Task(void *d_Service){
   Mtb_Services *thisServ = (Mtb_Services *)d_Service;
   mtb_audioPlayer = new MTB_Audio();
-  init_Mic_DAC_Audio_Processing_Peripherals();
+  Audio::audio_info_callback = mtb_Audio_Info;
+  init_Audio_Out_Processing();
   if(audioTextInfo_Q == NULL) audioTextInfo_Q = xQueueCreate(5, sizeof(AudioTextTransfer_T));
   mtb_Read_Nvs_Struct("dev_Volume", &deviceVolume, sizeof(uint8_t));
 
-    // Array to store Original audio I2S input stream (reading in chunks, e.g. 1024 values) 
-    int16_t audio_buffer[1024];   // 1024 values [2048 bytes] <- for the original I2S signed 16bit stream 
-    // now reading the I2S input stream (with NEW <I2S_std.h>)
-    size_t bytes_read = 0;
+  audio = new Audio();
+  delay(100);                                 // wait for the audio object to be successfully created.
+  audio->setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
+  audio->setVolume(deviceVolume);
+  audio->setConnectionTimeout(65000, 65000);
+
 //######################################################################################################################
   //mtb_Launch_This_Service(mtb_Usb_Audio_Sv);
+//######################################################################################################################
+
   while (MTB_SERV_IS_ACTIVE == pdTRUE){
-
-  //****** MIC CODE LOOP STARTS HERE ************************************************************************************************************ */  
-  //ESP_LOGI(TAG, "Microphone service is launched and waiting for activation.\n");
-  if(xSemaphoreTake(mic_Start_Sem_H, pdMS_TO_TICKS(25)) == pdTRUE){
-  I2S_Record_Init();
-    while (mic_OR_dac == I2S_MIC && MTB_SERV_IS_ACTIVE == pdTRUE){
-      if(i2s_channel_read(rx_handle, audio_buffer, sizeof(audio_buffer), &bytes_read, pdMS_TO_TICKS(1000)) != ESP_OK) continue;
-      // Optionally: Boostering the very low I2S Microphone INMP44 amplitude (multiplying values with factor GAIN_BOOSTER_I2S)
-      for (int16_t i = 0; i < (bytes_read / 2); ++i) AudioSamplesTransport.audioBuffer[i] = audio_buffer[i] * GAIN_BOOSTER_I2S;
-      AudioSamplesTransport.audioSampleLength_bytes = bytes_read;
-      xSemaphoreGive(audio_Data_Collected_Sem_H);
-  }
-  I2S_Record_De_Init();
-  }
-  //****** MIC CODE LOOP ENDS HERE ************************************************************************************************************ */
-
-
-  //****** DAC CODE LOOP START HERE ************************************************************************************************************ */
     if(xSemaphoreTake(dac_Start_Sem_H, pdMS_TO_TICKS(25)) == pdTRUE){
-    audio = new Audio();
-    delay(100);                                 // wait for the audio object to be successfully created.
-    audio->setConnectionTimeout(65000, 65000);
 
     switch(audioOutMode){
       case CONNECT_HOST: mtb_audioPlayer->contdSucceed = (int8_t) audio->connecttohost(mtb_audioPlayer->host_Url.c_str(), mtb_audioPlayer->host_Username.c_str(), mtb_audioPlayer->host_Password.c_str());
@@ -187,47 +173,91 @@ void audioProcessing_Task(void *d_Service){
       break;
     }
 
-      audio->setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-      audio->setVolume(deviceVolume);
-      
-    while(mic_OR_dac == I2S_DAC && MTB_SERV_IS_ACTIVE == pdTRUE){
+    while(mic_OR_dac == ON_DAC && MTB_SERV_IS_ACTIVE == pdTRUE){
       audio->loop();
       vTaskDelay(1);
     }// loop end
-    KillAudio:
-      delay(100);
-      delete audio;
-      audio = nullptr;
+      audio->stopSong();
   }
   //******* DAC CODE LOOP ENDS HERE *********************************************************************************************************** */
 }
+
+  KillAudio:
+    delay(100);
+    delete audio;
+    audio = nullptr;
 
 //######################################################################################################################
   //mtb_End_This_Service(mtb_Usb_Audio_Sv);
 //###################################################################################################################### 
   delete mtb_audioPlayer;
   vQueueDelete(audioTextInfo_Q); audioTextInfo_Q = NULL; //The Queue remains active for the next audio service. This prevents apps such as the Internet Radio from crashing.
-  de_init_Mic_DAC_Audio_Processing_Peripherals();
+  de_init_Audio_Out_Processing();
   mtb_End_This_Service(thisServ);
 }
 
+void audio_In_Processing_Task(void *d_Service){
+  Mtb_Services *thisServ = (Mtb_Services *)d_Service;
 
-void init_Mic_DAC_Audio_Processing_Peripherals(void){
-  if(mic_Start_Sem_H == NULL) mic_Start_Sem_H = xSemaphoreCreateBinary();
+  init_Audio_In_Processing();
+  if(audioTextInfo_Q == NULL) audioTextInfo_Q = xQueueCreate(5, sizeof(AudioTextTransfer_T));
+  mtb_Read_Nvs_Struct("dev_Volume", &deviceVolume, sizeof(uint8_t));
+
+    // Array to store Original audio I2S input stream (reading in chunks, e.g. 1024 values) 
+    int16_t audio_buffer[1024];   // 1024 values [2048 bytes] <- for the original I2S signed 16bit stream 
+    // now reading the I2S input stream (with NEW <I2S_std.h>)
+    size_t bytes_read = 0;
+//######################################################################################################################
+    I2S_Record_Init();
+
+  while (MTB_SERV_IS_ACTIVE == pdTRUE){
+
+  //****** MIC CODE LOOP STARTS HERE ************************************************************************************************************ */  
+  //ESP_LOGI(TAG, "Microphone service is launched and waiting for activation.\n");
+  if(xSemaphoreTake(mic_Start_Sem_H, pdMS_TO_TICKS(25)) == pdTRUE){
+
+      while (mic_OR_dac == ON_MIC && MTB_SERV_IS_ACTIVE == pdTRUE){
+        if(i2s_channel_read(rx_handle, audio_buffer, sizeof(audio_buffer), &bytes_read, pdMS_TO_TICKS(1000)) != ESP_OK) continue;
+        // Optionally: Boostering the very low I2S Microphone INMP44 amplitude (multiplying values with factor GAIN_BOOSTER_I2S)
+        for (int16_t i = 0; i < (bytes_read / 2); ++i) AudioSamplesTransport.audioBuffer[i] = audio_buffer[i] * GAIN_BOOSTER_I2S;
+        AudioSamplesTransport.audioSampleLength_bytes = bytes_read;
+        xSemaphoreGive(audio_In_Data_Collected_Sem_H);
+    }
+
+  }
+  //****** MIC CODE LOOP ENDS HERE ************************************************************************************************************ */
+  }
+  I2S_Record_De_Init();
+  de_init_Audio_In_Processing();
+  mtb_End_This_Service(thisServ);
+}
+
+void init_Audio_Out_Processing(void){
   if(dac_Start_Sem_H == NULL) dac_Start_Sem_H = xSemaphoreCreateBinary();
   //if(usbSpk_Ready_Sem_H == NULL) usbSpk_Ready_Sem_H = xSemaphoreCreateBinary(); // To reuse USB Speaker, uncomment this line and get library from Archive @ 23 Jan 2025
-  if(audio_Data_Collected_Sem_H == NULL) audio_Data_Collected_Sem_H = xSemaphoreCreateBinary();  
+}
+
+void init_Audio_In_Processing(void){
+  if(mic_Start_Sem_H == NULL) mic_Start_Sem_H = xSemaphoreCreateBinary();
+  if(audio_In_Data_Collected_Sem_H == NULL) audio_In_Data_Collected_Sem_H = xSemaphoreCreateBinary();  
 //************************************************************************************************************************************ */
   if(AudioSamplesTransport.audioBuffer == nullptr) AudioSamplesTransport.audioBuffer = (int16_t*) calloc(SAMPLEBLOCK, sizeof(int16_t));
 }
 
-void de_init_Mic_DAC_Audio_Processing_Peripherals(void){
-  if(AudioSamplesTransport.audioBuffer != nullptr) free(AudioSamplesTransport.audioBuffer); 
-  AudioSamplesTransport.audioBuffer = nullptr;
+void de_init_Audio_Out_Processing(void){
+  vSemaphoreDelete(dac_Start_Sem_H); dac_Start_Sem_H = NULL;
+}
+
+void de_init_Audio_In_Processing(void){
+  if(AudioSamplesTransport.audioBuffer != nullptr) {
+    free(AudioSamplesTransport.audioBuffer); 
+    AudioSamplesTransport.audioBuffer = nullptr;
+  }
 
   vSemaphoreDelete(mic_Start_Sem_H); mic_Start_Sem_H = NULL;
-  vSemaphoreDelete(dac_Start_Sem_H); dac_Start_Sem_H = NULL;
-  vSemaphoreDelete(audio_Data_Collected_Sem_H); audio_Data_Collected_Sem_H = NULL;
+  if(audio_In_Data_Collected_Sem_H != NULL){
+    vSemaphoreDelete(audio_In_Data_Collected_Sem_H); audio_In_Data_Collected_Sem_H = NULL;
+  } 
 }
 
 bool I2S_Record_Init() {  
@@ -304,105 +334,104 @@ int BucketFrequency(int iBucket){
  return iOffset * (samplingFrequency / 2) / (SAMPLEBLOCK / 2);
 }
 
-void mtb_Use_Mic_Or_Dac(uint8_t mtb_i2s_Module){
+void mtb_Dac_Or_Mic_Status(uint8_t mtb_i2s_Module){
   mic_OR_dac = mtb_i2s_Module;
   delay(100);
   switch(mic_OR_dac){
-    case I2S_DAC:xSemaphoreGive(dac_Start_Sem_H);
+    case ON_DAC:xSemaphoreGive(dac_Start_Sem_H);
       break;
-    case I2S_MIC: xSemaphoreGive(mic_Start_Sem_H);
+    case ON_MIC: xSemaphoreGive(mic_Start_Sem_H);
       break;
     default:  ESP_LOGI(TAG, "Mic and/or Speakers Deactivated. \n");
       break;
     }
 }
 
-// // void audio_info(const char *info){
-// //     ESP_LOGI(TAG, "AudioI2S Info: %s \n",  info);
-// //     // audioTextTransferBuffer.Audio_Text_type = AUDIO_INFO;
-// //     // strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     // xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// // void audio_id3data(const char *info){  //id3 metadata
-// //     //ESP_LOGI(TAG, "id3Data: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_ID3DATA;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// // void audio_eof_mp3(const char *info){  //end of mp3 file
-// //     //ESP_LOGI(TAG, "eof_mp3: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_EOF_MP3;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// void audio_showstation(const char *info){
-//     //ESP_LOGI(TAG, "Station: %s \n",  info);
-//     audioTextTransferBuffer.Audio_Text_type = AUDIO_SHOW_STATION;
-//     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-//     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// }
-// void audio_showstreamtitle(const char *info){
-//     //ESP_LOGI(TAG, "Stream Title: %s \n",  info);
-//     audioTextTransferBuffer.Audio_Text_type = AUDIO_SHOWS_STREAM_TITLE;
-//     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-//     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// }
-// // void audio_bitrate(const char *info){
-// //     //ESP_LOGI(TAG, "Bitrate: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_BITRATE;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// // void audio_commercial(const char *info){  //duration in sec
-// //     //ESP_LOGI(TAG, "Commercial: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_COMMERCIAL;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// // void audio_icyurl(const char *info){  //homepage
-// //     //ESP_LOGI(TAG, "ICYURL: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_ICYURL;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// // void audio_icydescription(const char* info){
-// //     //ESP_LOGI(TAG, "ICY DESCRIPTION: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_ICY_DESCRIPTION;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// // void audio_lasthost(const char *info){  //stream URL played
-// //     //ESP_LOGI(TAG, "LastHost: %s \n",  info);
-// //     audioTextTransferBuffer.Audio_Text_type = AUDIO_LASTHOST;
-// //     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-// //     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// // }
-// void audio_eof_speech(const char *info){
-//     ESP_LOGI(TAG, "End Of Speeach: %s \n",  info);
-//     audioTextTransferBuffer.Audio_Text_type = AUDIO_EOF_SPEECH;
-//     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-//     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// }
 
-// void audio_eof_stream(const char* info){     // The webstream comes to an end
-//     ESP_LOGI(TAG, "End Of Stream: %s \n",  info);
-//     audioTextTransferBuffer.Audio_Text_type = AUDIO_EOF_STREAM;
-//     strcpy(audioTextTransferBuffer.Audio_Text_Data, info);
-//     xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
-// } 
+void mtb_Audio_Info(Audio::msg_t m) {
+    switch(m.e){
+        case Audio::evt_info:           
+          ESP_LOGI(TAG, "AudioI2S Info: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_INFO;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break;
+        case Audio::evt_eof:            
+          ESP_LOGI(TAG, "EOF MP3: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_EOF_MP3;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break;
+        case Audio::evt_bitrate:        
+          ESP_LOGI(TAG, "Bitrate: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_BITRATE;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0); 
+        break; // icy-bitrate or bitrate from metadata
+        case Audio::evt_icyurl:         
+          ESP_LOGI(TAG, "ICYURL: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_ICYURL;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break;
+        case Audio::evt_id3data:        
+          ESP_LOGI(TAG, "ID3 Data: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_ID3DATA;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break; // id3-data or metadata
+        case Audio::evt_lasthost:       
+          ESP_LOGI(TAG, "LastHost: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_LASTHOST;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break;
+        case Audio::evt_name:           
+          ESP_LOGI(TAG, "Station: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_SHOW_STATION;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break; // station name or icy-name
+        case Audio::evt_streamtitle:    
+          ESP_LOGI(TAG, "Stream Title: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_SHOWS_STREAM_TITLE;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+        break;
+        case Audio::evt_icylogo:
+          ESP_LOGI(TAG, "ICY Logo: ... %s\n", m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_ICYLOGO;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+        break;
+        case Audio::evt_icydescription:
+          ESP_LOGI(TAG, "ICY Description: %s \n",  m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_ICY_DESCRIPTION;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0);
+         break;
 
-// // void audio_id3image(File& file, const size_t pos, const size_t size){ //ID3 metadata image
+        case Audio::evt_image: for(int i = 0; i < m.vec.size(); i += 2){ Serial.printf("cover image:  segment %02i, pos %07lu, len %05lu\n", i / 2, m.vec[i], m.vec[i + 1]);} break; // APIC
 
-// // }
+        case Audio::evt_lyrics:         
+          ESP_LOGI(TAG, "Sync Lyrics:  %s\n", m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_SYNC_LYRICS;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0); 
+        break;
+        case Audio::evt_log:
+          ESP_LOGI(TAG, "Audio Logs:   %s\n", m.msg);
+          audioTextTransferBuffer.Audio_Text_type = AUDIO_LOG;
+          strcpy(audioTextTransferBuffer.Audio_Text_Data, m.msg);
+          xQueueSend(audioTextInfo_Q, &audioTextTransferBuffer, 0); 
+        break;
+        default:    ESP_LOGI(TAG, "Message:..... %s\n", m.msg); break;
+    }
+}
 
-// // void audio_id3lyrics(File& file, const size_t pos, const size_t size){ //ID3 metadata lyrics
-
-// // } 
-
-// void audio_process_i2s(int16_t* outBuff, uint16_t validSamples, uint8_t bitsPerSample, uint8_t channels, bool *continueI2S)
+// void audio_process_i2s(int16_t* outBuff, uint16_t validSamples, bool *continueI2S)
 // {
 //     // Compute bytes in this callback block (treat validSamples as *frames*)
-//     const size_t bytes_per_frame = channels * (bitsPerSample/8);
+//     const size_t bytes_per_frame = 4; // 2 channels * 2 bytes per sample. 
 //     size_t len_bytes = (size_t)validSamples * bytes_per_frame;
 
 //     // Non-blocking push to the ringbuffer; if full, we drop (or you can overwrite)
@@ -516,114 +545,114 @@ void audioVisualizer(){
 #endif
 
     switch(audioSpecVisual_Set.selectedPattern){
-      //  // Now visualize those bar heights
-      //  case PATTERN_0 :
-      //   PeakDirection = AUD_VIS_DOWN;
-      //   BoxedBars(band, barHeight);
-      //   BluePeak(band);
-      //      break;
+       // Now visualize those bar heights
+       case PATTERN_0 :
+        PeakDirection = AUD_VIS_DOWN;
+        BoxedBars(band, barHeight);
+        BluePeak(band);
+           break;
 
-      //  case PATTERN_1 :
-      //   PeakDirection = AUD_VIS_DOWN;
-      //   BoxedBars2(band, barHeight);
-      //   BluePeak(band);
-      //      break;
+       case PATTERN_1 :
+        PeakDirection = AUD_VIS_DOWN;
+        BoxedBars2(band, barHeight);
+        BluePeak(band);
+           break;
 
-      //  case PATTERN_2 :
-      //    PeakDirection = AUD_VIS_DOWN;
-      //    BoxedBars3(band, barHeight);
-      //    RedPeak(band);
-      //      break;
+       case PATTERN_2 :
+         PeakDirection = AUD_VIS_DOWN;
+         BoxedBars3(band, barHeight);
+         RedPeak(band);
+           break;
 
-      //  case PATTERN_3 :
-      //    PeakDirection = AUD_VIS_DOWN;
-      //    RedBars(band, barHeight);
-      //    BluePeak(band);
-      //      break;
+       case PATTERN_3 :
+         PeakDirection = AUD_VIS_DOWN;
+         RedBars(band, barHeight);
+         BluePeak(band);
+           break;
 
-      //  case PATTERN_4 :
-      //    PeakDirection = AUD_VIS_DOWN;
-      //    ColorBars(band, barHeight);
-      //      break;
+       case PATTERN_4 :
+         PeakDirection = AUD_VIS_DOWN;
+         ColorBars(band, barHeight);
+           break;
 
-      //  case PATTERN_5 :
-      //    PeakDirection = AUD_VIS_DOWN;
-      //    Twins(band, barHeight);
-      //    WhitePeak(band);
-      //      break;
+       case PATTERN_5 :
+         PeakDirection = AUD_VIS_DOWN;
+         Twins(band, barHeight);
+         WhitePeak(band);
+           break;
 
-      //  case PATTERN_6 :
-      //    PeakDirection = AUD_VIS_DOWN;
-      //    Twins2(band, barHeight);
-      //    WhitePeak(band);
-      //      break;
+       case PATTERN_6 :
+         PeakDirection = AUD_VIS_DOWN;
+         Twins2(band, barHeight);
+         WhitePeak(band);
+           break;
 
-      //  case PATTERN_7 :
-      //     PeakDirection = AUD_VIS_DOWN;
-      //    TriBars(band, barHeight);
-      //    DoublePeak(band);
-      //      break;
+       case PATTERN_7 :
+          PeakDirection = AUD_VIS_DOWN;
+         TriBars(band, barHeight);
+         DoublePeak(band);
+           break;
 
-      //  case PATTERN_8 :
-      //    PeakDirection = AUD_VIS_DOWN;
-      //    TriBars(band, barHeight);
-      //    TriPeak(band);
-      //      break;
+       case PATTERN_8 :
+         PeakDirection = AUD_VIS_DOWN;
+         TriBars(band, barHeight);
+         TriPeak(band);
+           break;
 
-      //  case PATTERN_9 :
-      //   PeakDirection = AUD_VIS_DOWN;
-      //   centerBars(band, barHeight);
-      //      break;
+       case PATTERN_9 :
+        PeakDirection = AUD_VIS_DOWN;
+        centerBars(band, barHeight);
+           break;
 
-      //  case PATTERN_10 :
-      //   PeakDirection = AUD_VIS_DOWN;
-      //   centerBars2(band, barHeight);
-      //      break;
+       case PATTERN_10 :
+        PeakDirection = AUD_VIS_DOWN;
+        centerBars2(band, barHeight);
+           break;
 
-      //  case PATTERN_11 :
-      //  PeakDirection = AUD_VIS_DOWN;
-      //  BlackBars(band, barHeight);
-      //  DoublePeak(band);
-      //      break;
+       case PATTERN_11 :
+       PeakDirection = AUD_VIS_DOWN;
+       BlackBars(band, barHeight);
+       DoublePeak(band);
+           break;
            
-      //   case PATTERN_12 :
-      //   GradientBars(band, barHeight);
-      //   break;
-      //   case PATTERN_13 :
-      //   CheckerboardBars(band, barHeight);
-      //   break;
-      //   case PATTERN_14 :
-      //   RainbowGradientBars(band, barHeight);
-      //   break;
-      //   case PATTERN_15 :
-      //   StripedBars(band, barHeight);
-      //   break;
-      //   case PATTERN_16 :
-      //   DiagonalBars(band, barHeight);
-      //   break;
-      //   case PATTERN_17 :
-      //   VerticalGradientBars(band, barHeight);
-      //   break;
-      //   case PATTERN_18 :
-      //   ZigzagBars(band, barHeight);
-      //   break;
-      //   case PATTERN_19 :
-      //   DottedBars(band, barHeight);
-      //   break;
-      //   case PATTERN_20 :
-      //   ColorFadeBars(band, barHeight);
-      //   break;
-      //   case PATTERN_21 :
-      //   PulsingBars(band, barHeight);
-      //   break;
-      //   case PATTERN_22 :
-      //   FlashingBars(band, barHeight);
-      //   break;
-        // case PATTERN_23 :
-        //  PeakDirection = AUD_VIS_UP;
-        //  TriBars(band, barHeight);
-        //  TriPeak(band);
-        //    break;
+        case PATTERN_12 :
+        GradientBars(band, barHeight);
+        break;
+        case PATTERN_13 :
+        CheckerboardBars(band, barHeight);
+        break;
+        case PATTERN_14 :
+        RainbowGradientBars(band, barHeight);
+        break;
+        case PATTERN_15 :
+        StripedBars(band, barHeight);
+        break;
+        case PATTERN_16 :
+        DiagonalBars(band, barHeight);
+        break;
+        case PATTERN_17 :
+        VerticalGradientBars(band, barHeight);
+        break;
+        case PATTERN_18 :
+        ZigzagBars(band, barHeight);
+        break;
+        case PATTERN_19 :
+        DottedBars(band, barHeight);
+        break;
+        case PATTERN_20 :
+        ColorFadeBars(band, barHeight);
+        break;
+        case PATTERN_21 :
+        PulsingBars(band, barHeight);
+        break;
+        case PATTERN_22 :
+        FlashingBars(band, barHeight);
+        break;
+        case PATTERN_23 :
+         PeakDirection = AUD_VIS_UP;
+         TriBars(band, barHeight);
+         TriPeak(band);
+           break;
         default:
           break;
       }
@@ -665,7 +694,7 @@ bool MTB_Audio::mtb_Openai_Speech(const String& model, const String& input, cons
   openAI_Speed = speed;
   audioOutMode = OPENAI_SPEECH;
 
-  mtb_Use_Mic_Or_Dac(I2S_DAC);
+  mtb_Dac_Or_Mic_Status(ON_DAC);
 
   while (contdSucceed == -1 && countdown-->0) delay(5);
   return (bool) contdSucceed;
@@ -680,7 +709,7 @@ bool MTB_Audio::mtb_ConnectToHost(const char* host, const char* user, const char
   host_Password = String(pwd);
 
   audioOutMode = CONNECT_HOST;
-  mtb_Use_Mic_Or_Dac(I2S_DAC);
+  mtb_Dac_Or_Mic_Status(ON_DAC);
 
   while (contdSucceed == -1 && countdown-->0) delay(5);
   return (bool) contdSucceed;
@@ -694,7 +723,7 @@ bool MTB_Audio::mtb_ConnectToSpeech(const char* speech, const char* lang){
   ggle_Lang = String(lang);
 
   audioOutMode = CONNECT_SPEECH;
-  mtb_Use_Mic_Or_Dac(I2S_DAC);
+  mtb_Dac_Or_Mic_Status(ON_DAC);
 
   while (contdSucceed == -1 && countdown-->0) delay(5);
   return (bool) contdSucceed;
@@ -710,7 +739,7 @@ bool MTB_Audio::mtb_ConnectToUSB_FS( const char *path, int32_t m_fileStartPos){
   bool isMounted = USBFS.begin("/usb");
   if (isMounted){
         audioOutMode = CONNECT_USB_FS;
-        mtb_Use_Mic_Or_Dac(I2S_DAC);
+        mtb_Dac_Or_Mic_Status(ON_DAC);
   }
   else {
     ESP_LOGE("MTB_AUDIO", "USBFS not mounted. Cannot connect to USB_FS.");
@@ -738,7 +767,7 @@ bool MTB_Audio::mtb_ConnectToUSB_FS( const char *path, int32_t m_fileStartPos){
 // }
 
 
-void usbSpeakerProcess_Task(void *d_Service){
+void usb_Speaker_Process_Task(void *d_Service){
   Mtb_Services *thisServ = (Mtb_Services *)d_Service;
 
     s_event_queue = xQueueCreate(10, sizeof(s_event_queue_t)); // REVISIT -> Potential memory savings by putting queue in PSRAM. Or delete after use.
@@ -808,7 +837,7 @@ static void uac_host_lib_callback(uint8_t addr, uint8_t iface_num, const uac_hos
         xQueueSend(s_event_queue, &evt_queue, 0);
 }
 
-void uacSpeaker_Task(void *d_Service){
+void uac_Speaker_Task(void *d_Service){
     Mtb_Services *thisServ = (Mtb_Services *)d_Service;
 
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);                              // REVISIT -> This task seems to wait indefinitely. Confirm that the service does closes when required.

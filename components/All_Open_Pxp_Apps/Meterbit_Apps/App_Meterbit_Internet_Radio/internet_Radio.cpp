@@ -28,7 +28,6 @@ EXT_RAM_BSS_ATTR TaskHandle_t internet_Radio_Task_H = NULL;
 // Default RadioStation
 EXT_RAM_BSS_ATTR RadioStation_t currentRadioStation;
 
-bool radioPlayReady = true;
 //static const char favouriteRadioStationsFilePath[] = "/radioStations/favSta.csv";
 //String posterCurrentStation = "/radioStations/currentPoster.png";
 //************************************************************* */
@@ -44,7 +43,7 @@ void intRadioButtonControl(button_event_t);
 //bool decodeSaveBase64(String &base64Image, String &fileName);
 //void station_Poster_Download(void);
 
-EXT_RAM_BSS_ATTR Mtb_Applications_StatusBar *internetRadio_App = new Mtb_Applications_StatusBar(internetRadio_App_Task, &internet_Radio_Task_H, "Int Rad Task", 10240, pdTRUE);
+EXT_RAM_BSS_ATTR Mtb_Applications_StatusBar *internetRadio_App = new Mtb_Applications_StatusBar(internetRadio_App_Task, &internet_Radio_Task_H, "Int Rad Task", 6144, pdTRUE);
 
 //***************************************************************************************************
 void  internetRadio_App_Task(void* dApplication){
@@ -52,8 +51,8 @@ void  internetRadio_App_Task(void* dApplication){
     thisApp->mtb_App_EncoderFn_ptr = mtb_Vol_Control_Encoder;
     thisApp->mtb_App_ButtonFn_ptr = intRadioButtonControl;
     mtb_App_BleComm_Parser_Sv->mtb_Register_Ble_Comm_ServiceFns(selectRadioStations, playRadioStationLink, updateSavedStations, volumeControl);
-    mtb_App_Init(thisApp, mtb_Status_Bar_Clock_Sv, mtb_Dac_N_Mic_Sv);
-  //**************************************************************************************************************************
+    mtb_App_Init(thisApp, mtb_Status_Bar_Clock_Sv, mtb_Audio_Out_Sv);
+  //*************************************************************************************************
     AudioTextTransfer_T audioTextReceiver;
     Mtb_ScrollText_t fmStation(11, 46, 116, Terminal6x8, CYAN, 15, 20000, 20000);
     Mtb_ScrollText_t streamTitle(11, 55, 116, Terminal6x8, YELLOW, 30, 20000, 5000);
@@ -69,7 +68,7 @@ void  internetRadio_App_Task(void* dApplication){
     mtb_Draw_Local_Png({"/batIcons/radStation.png", 2, 46});
     mtb_Draw_Local_Png({"/batIcons/radStrmTitle.png", 2, 55});
     mtb_Panel_Draw_Rect(0, 44, 127, 63, PURPLE_NAVY);
-//******************************************************************************************************************************** */
+//****************************************************************************************************
     currentRadioStation = (RadioStation_t){
       "Naija Hits FM",
       "https://stream.zeno.fm/thbqnu2wvmzuv",
@@ -94,10 +93,8 @@ void  internetRadio_App_Task(void* dApplication){
       //conn2Sta.mtb_Scroll_Active(STOP_SCROLL);
       fmStation.mtb_Scroll_This_Text(currentRadioStation.stationName, CYAN);
       conn2Sta.mtb_Scroll_This_Text("Connected to Radio Station..!!", LEMON_MERINGUE);
-      
-      radioPlayReady = true;
 
-      while ((Mtb_Applications::internetConnectStatus) && (radioPlayReady) && (MTB_APP_IS_ACTIVE == pdTRUE)){
+      while ((Mtb_Applications::internetConnectStatus) && (mic_OR_dac == ON_DAC) && (MTB_APP_IS_ACTIVE == pdTRUE)){
         if(xQueueReceive(audioTextInfo_Q, &audioTextReceiver, 0) == pdTRUE){
           switch(audioTextReceiver.Audio_Text_type){
 
@@ -114,14 +111,17 @@ void  internetRadio_App_Task(void* dApplication){
             default: //ESP_LOGI(TAG, "OTHER INFO: %s\n", audioTextReceiver.Audio_Text_Data);
                 break;
           }
-        }else if(xSemaphoreTake(audio_Data_Collected_Sem_H, 0) == pdTRUE){
-          // audioVisualizer();
-          // if(visualize the audio samples)audioVisualizer(&RadioAudioTransferBuffer);
-          // if(save radio data to flash drive)
-          // if(transmit through bluetooth)
-        } else  vTaskDelay(1);
+        }
+        //  else if(xSemaphoreTake(audio_In_Data_Collected_Sem_H, 0) == pdTRUE){
+        //   // audioVisualizer();
+        //   // if(visualize the audio samples)audioVisualizer(&RadioAudioTransferBuffer);
+        //   // if(save radio data to flash drive)
+        //   // if(transmit through bluetooth)
+        // } 
+        else  vTaskDelay(1);
     }
-    mtb_Use_Mic_Or_Dac(DISABLE_I2S_MIC_DAC);
+
+    conn2Sta.mtb_Scroll_This_Text("Disconnected from Station.", ORANGE_RED);
 }
 // fmStation.mtb_Scroll_Active(STOP_SCROLL);
 // streamTitle.mtb_Scroll_Active(STOP_SCROLL);
@@ -188,7 +188,7 @@ void playRadioStationLink(JsonDocument& dCommand){
 
   mtb_Ble_App_Cmd_Respond_Success(internetRadioAppRoute, cmd, pdPASS);
   mtb_Write_Nvs_Struct("currentRadSta", &currentRadioStation, sizeof(RadioStation_t));
-  radioPlayReady = false;
+  mtb_Dac_Or_Mic_Status(OFF_DAC_N_MIC);
 }
 
 // Function to write a RadioStation's info to a CSV file
