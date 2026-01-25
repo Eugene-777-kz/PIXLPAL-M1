@@ -227,7 +227,7 @@ if(pre_Day != now->tm_mday  || thisApp->elementRefresh){
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
   }
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 //**13*********************************************************************************************************************

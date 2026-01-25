@@ -77,7 +77,7 @@ void newsAPI_App_Task(void * dApplication) {
             displayNewsAPI_Headlines(headlines);
         }
     }
-    mtb_End_This_App(thisApp);
+    mtb_Delete_This_App(thisApp);
 }
 
 // This function uses GNews API to fetch the latest headlines.

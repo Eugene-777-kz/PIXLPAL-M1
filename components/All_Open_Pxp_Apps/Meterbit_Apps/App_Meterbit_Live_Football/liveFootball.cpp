@@ -226,7 +226,7 @@ void liveFootball_App_Task(void *dApplication){
     delete teamStandings4;
     delete pointsStandings4;
 
-    mtb_End_This_App(thisApp);
+    mtb_Delete_This_App(thisApp);
 }
 
 

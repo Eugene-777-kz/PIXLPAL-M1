@@ -45,7 +45,7 @@ typedef struct {
     } data;
 } app_message_t;
 
-static const char *TAG = "USB FLSH DRV";
+static const char *TAG = "MTB USB DRV";
 #define MNT_PATH         "/usb"     // Path in the Virtual File System, where the USB flash drive is going to be mounted
 #define BUFFER_SIZE      4096       // The read/write performance can be improved with larger buffer for the cost of RAM, 4kB is enough for most usecases
 
@@ -56,7 +56,7 @@ static void msc_event_cb(const msc_host_event_t *event, void *arg);
 void usb_Mass_Strg_Task(void *params);
 //static void print_device_info(msc_host_device_info_t *info);
 
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Usb_Mass_Storage_Sv = new Mtb_Services(usb_Mass_Strg_Task, &usb_Mass_Storage_H, "USB Mass Strg", 4096, 2, pdFALSE, 1);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Usb_Mass_Storage_Sv = new Mtb_Services(usb_Mass_Strg_Task, &usb_Mass_Storage_H, "USB Mass Strg", 4096, 2, 1);
 
 void usb_Mass_Strg_Task(void* d_Service){
     Mtb_Services *thisServ = (Mtb_Services *)d_Service;
@@ -150,7 +150,7 @@ void usb_Mass_Strg_Task(void* d_Service){
     ESP_ERROR_CHECK(usb_host_uninstall());
     vQueueDelete(app_queue);
 
-    mtb_End_This_Service(thisServ);
+    mtb_Delete_This_Service(thisServ);
 }
 
 

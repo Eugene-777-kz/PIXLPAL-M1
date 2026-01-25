@@ -152,7 +152,7 @@ void  outlookCal_App_Task(void* dApplication){
   delete outlookEvent_Task_Status_2;
 
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 
@@ -162,7 +162,7 @@ void  outlookCal_App_Task(void* dApplication){
 //     while(MTB_SERV_IS_ACTIVE == pdTRUE){
 //           //server.handleClient();
 //     }
-//     mtb_End_This_Service(thisServ);
+//     mtb_Delete_This_Service(thisServ);
 // }
 
 

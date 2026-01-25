@@ -115,28 +115,52 @@ class MTB_Audio {
     public:
         MTB_Audio(){};
 
-        int8_t contdSucceed = -1; // Two (-1) here stands for a number that is neither 0 or 1.
+        int8_t contdSucceed = -1; // The "-1" here stands for a number that is neither 0 or 1.
 
         String speech_Message;
+
+        // OpenAI Speech Settings
+        String openAI_Instructions;
         String openAI_Model;
         String openAI_Voice;
         String openAI_ResponseFormat;
         String openAI_Speed;
 
+        // Host Connection Settings
         String host_Url;
         String host_Username;
         String host_Password;
 
+        // Google Speech Settings
         String ggle_Lang;
 
+        // USB FS Settings
         String filePath;
         int32_t fileStartPos;
 
-        bool mtb_Openai_Speech(const String &model, const String &input, const String &voice, const String &response_format, const String &speed);
+
+        // OPENAI SPEECH PARAMETERS:      
+        // Text to speech API provides a speech endpoint based on our TTS (text-to-speech) model.
+        // More info: https://platform.openai.com/docs/guides/text-to-speech/text-to-speech
+
+        // Request body: 
+        // model (string) [Required] - One of the available TTS models: tts-1 or tts-1-hd
+        // input (string) [Required] - The text to generate audio for. The maximum length is 4096 characters.
+        // instructions (string) [Optional] - A description of the desired characteristics of the generated audio.
+        // voice (string) [Required] - The voice to use when generating the audio. Supported voices are alloy, echo, fable, onyx, nova, and shimmer.
+        // response_format (string) [Optional] - Defaults to mp3. The format to audio in. Supported formats are mp3, opus, aac, and flac.
+        // speed (number) [Optional] - Defaults to 1. The speed of the generated audio. Select a value from 0.25 to 4.0. 1.0 is the default.
+        bool mtb_Openai_Speech(const String &model, const String &input, const String& instructions, const String &voice, const String &response_format, const String &speed);
+        
+        
         bool mtb_ConnectToHost(const char *host, const char *user = "", const char *pwd = "");
+        
+        
         bool mtb_ConnectToSpeech(const char *speech, const char *lang);
+        
+        
         bool mtb_ConnectToUSB_FS(const char *path, int32_t m_fileStartPos = -1);
-        //bool mtb_ConnectToUSBFS(const char *path, int32_t m_fileStartPos = -1);
+
 };
 
 extern MTB_Audio *mtb_audioPlayer;

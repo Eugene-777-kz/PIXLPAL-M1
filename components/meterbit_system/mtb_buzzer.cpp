@@ -91,5 +91,5 @@ Mtb_Services *thisServ = (Mtb_Services *)dService;
         //ESP_LOGI(TAG, "ONE SEC DELAY\n");
     }
 // CREATED TIMERS IN THIS TASK SHOULD BE DELETED HERE IF NEEDED.
-    mtb_End_This_Service(thisServ);
+    mtb_Delete_This_Service(thisServ);
 }

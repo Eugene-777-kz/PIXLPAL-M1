@@ -83,7 +83,7 @@ void polygonFX_App_Task(void *dApplication){
         for(int32_t t=0; t<waitMs && MTB_APP_IS_ACTIVE; t+=1000) delay(1000);
     }
 
-    mtb_End_This_App(thisApp);
+    mtb_Delete_This_App(thisApp);
 }
 
 

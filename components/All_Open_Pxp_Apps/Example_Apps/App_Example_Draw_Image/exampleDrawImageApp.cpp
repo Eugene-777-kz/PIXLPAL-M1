@@ -36,5 +36,5 @@ delay(5000);
 }
 
 // Clean up the application before exiting
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }

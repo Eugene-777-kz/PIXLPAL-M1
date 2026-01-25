@@ -126,7 +126,7 @@ void  internetRadio_App_Task(void* dApplication){
 // fmStation.mtb_Scroll_Active(STOP_SCROLL);
 // streamTitle.mtb_Scroll_Active(STOP_SCROLL);
 // conn2Sta.mtb_Scroll_Active(STOP_SCROLL);
-mtb_End_This_App(thisApp);
+mtb_Delete_This_App(thisApp);
 }
 
 //##############################################################################################################

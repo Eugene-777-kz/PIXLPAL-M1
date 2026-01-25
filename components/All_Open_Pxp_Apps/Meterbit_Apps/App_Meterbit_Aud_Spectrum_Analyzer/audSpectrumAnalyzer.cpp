@@ -47,7 +47,7 @@ void  audSpecAnalyzer_App_Task(void* dApplication){
   mtb_Dac_Or_Mic_Status(OFF_DAC_N_MIC);
   deInitAudioVisualPattern();
   
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 void changePattern_Button(button_event_t button_Data){

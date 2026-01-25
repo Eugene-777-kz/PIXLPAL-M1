@@ -215,7 +215,7 @@ while (MTB_APP_IS_ACTIVE == pdTRUE) {
     vSemaphoreDelete(changeDispCrypto_Sem);
     changeDispCrypto_Sem = NULL;
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 void readCryptoSymbols(const char* filename, String coinSymbols[], int& count, const int maxSymbols){

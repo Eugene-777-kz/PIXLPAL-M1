@@ -291,7 +291,7 @@ if(pre_Day != now->tm_mday  || thisApp->elementRefresh){
   delete headerText;
   delete headerTextScroll;
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 //**0*********************************************************************************************************************
@@ -530,7 +530,7 @@ while (MTB_SERV_IS_ACTIVE == pdTRUE && (entry = readdir(dir)) != NULL) {
 }
 closedir(dir);
 	}
-  mtb_End_This_Service(thisServ);
+  mtb_Delete_This_Service(thisServ);
 }
 
 void printPixAnimClkThm(uint16_t* themeColor){

@@ -2,9 +2,10 @@
 #define MQTT_H
 
 #include "PicoMQTT.h"
-#include "ArduinoJson.h"
 
-extern JsonDocument dCommand;
+// #include "ArduinoJson.h"
+
+// extern JsonDocument dCommand;
 
 struct mqtt_Data_Trans_t {
 char topic_Listen[200];      // MQTT Topic coming from Client or sender or App
@@ -21,9 +22,7 @@ protected:
     virtual void on_unsubscribe(const char *client_id, const char *topic) override;
 };
 
-    extern TaskHandle_t mtb_MQTT_Client_Task_Handle;
-    extern TaskHandle_t mtb_MQTT_Server_Task_Handle;
-    extern mtb_MQTT_Server mqttServer;
+    // extern mtb_MQTT_Server mqttServer;
     extern PicoMQTT::Client mqttClient;
 
     // extern mqtt_Data_Trans_t config_Cmd_mqtt_data;
@@ -31,11 +30,4 @@ protected:
     // extern const char config_MQTT_Topic[];
     // extern const char apps_MQTT_Topic[];
 
-    extern void initialize_MQTT();
-    extern void start_MQTT_Server();
-    extern void stop_MQTT_Server();
-    extern void start_MQTT_Client();
-    extern void stop_MQTT_Client();
-    extern void MQTT_Server_Task(void *);
-    extern void MQTT_Client_Task(void *);
 #endif

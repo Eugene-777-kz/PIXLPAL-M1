@@ -29,7 +29,7 @@ void musicPlayer_App_Task(void* dApplication){
   thisApp->mtb_App_EncoderFn_ptr = mtb_Vol_Control_Encoder;
   thisApp->mtb_App_ButtonFn_ptr = nextTrackButton;
   mtb_App_BleComm_Parser_Sv->mtb_Register_Ble_Comm_ServiceFns(selectNext_PreviousTrack);
-  mtb_App_Init(thisApp, mtb_Audio_Out_Sv);
+  mtb_App_Init(thisApp, mtb_Usb_Mass_Storage_Sv, mtb_Audio_Out_Sv);
   //************************************************************************************ */
   musicPlayerData = (MusicPlayer_Data_t){1};
   mtb_Read_Nvs_Struct("musicPlayer", &musicPlayerData, sizeof(MusicPlayer_Data_t));
@@ -45,7 +45,7 @@ while (MTB_APP_IS_ACTIVE == pdTRUE) {
 
 }
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 void nextTrackButton(button_event_t button_Data){

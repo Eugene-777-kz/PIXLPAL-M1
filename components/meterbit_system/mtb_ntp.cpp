@@ -40,5 +40,5 @@ void sntp_Time_init_Task(void* dService){
   esp_sntp_init();
   sntp_set_time_sync_notification_cb(on_got_time);
 
-  mtb_End_This_Service(thisService);
+  mtb_Delete_This_Service(thisService);
 }

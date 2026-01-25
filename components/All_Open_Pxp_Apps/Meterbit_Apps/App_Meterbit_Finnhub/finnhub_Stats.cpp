@@ -184,7 +184,7 @@ while (MTB_APP_IS_ACTIVE == pdTRUE){
     vSemaphoreDelete(changeDispStock_Sem);
     changeDispStock_Sem = NULL;
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 //##############################################################################################################
 

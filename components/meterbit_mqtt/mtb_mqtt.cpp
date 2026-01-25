@@ -14,140 +14,137 @@
 #include "mtb_mqtt.h"
 #include "mtb_github.h"
 
-EXT_RAM_BSS_ATTR TaskHandle_t mtb_MQTT_Client_Task_Handle = NULL;
-// EXT_RAM_BSS_ATTR TaskHandle_t mtb_MQTT_Server_Task_Handle = NULL;
+static const char TAG[] = "MTB_MQTT";
+
+EXT_RAM_BSS_ATTR TaskHandle_t mtb_MQTT_Client_Task_H = NULL;
+// EXT_RAM_BSS_ATTR TaskHandle_t mtb_MQTT_Server_Task_H = NULL;
+
 // EXT_RAM_BSS_ATTR QueueHandle_t config_Cmd_MQTT_queue = NULL;
 // EXT_RAM_BSS_ATTR QueueHandle_t app_MQTT_queue = NULL; 
-// StackType_t *mqttServerStack_Ptr;
-// StaticTask_t *mqttServerTcb_psram_Ptr;
-// StackType_t *mqttClientStack_Ptr;
-// StaticTask_t *mqttClientTcb_psram_Ptr;
 
-// const static int mqtt_queue_size = 4;
+void mqtt_Server_Task(void*);
+void mqtt_Client_Task(void*);
+void mtb_Setup_Mqtt_Server(void);
+void mtb_Setup_Mqtt_Client(void);
 
+//const static int mqtt_queue_size = 4;
 // mqtt_Data_Trans_t config_Cmd_mqtt_data;
 // mqtt_Data_Trans_t apps_mqtt_data;
-// const char apps_MQTT_Topic[] = "Pixlpal/Apps";
-// const char config_MQTT_Topic[] = "Pixlpal/Config";
-// mtb_MQTT_Server mqttServer;
+
+// static const char apps_MQTT_Topic[] = "Pixlpal/Apps";
+// static const char config_MQTT_Topic[] = "Pixlpal/Config";
+//mtb_MQTT_Server mqttServer;
+
 PicoMQTT::Client mqttClient("broker.hivemq.com");
 //PicoMQTT::Client mqttClient("test.mosquitto.org");
 
-void mtb_MQTT_Server::on_connected(const char *client_id){
-  mtb_Show_Status_Bar_Icon({"/batIcons/phoneCont.png", 18, 1});
-  //mtb_Set_Status_RGB_LED(WHITE_SMOKE);
-  //Mtb_Applications::mqttPhoneConnectStatus = true;
-}
 
-void mtb_MQTT_Server::on_disconnected(const char *client_id){
-    mtb_Wipe_Status_Bar_Icon({"/batIcons/phoneCont.png", 18, 1});
-    //mtb_Set_Status_RGB_LED(GREEN);
-    //Mtb_Applications::mqttPhoneConnectStatus = false;
-}
+//EXT_RAM_BSS_ATTR Mtb_Services *mtb_Mqtt_Server_Sv = new Mtb_Services(mqtt_Server_Task, &mtb_MQTT_Server_Task_H, "MQTT Server Sv", 6144, 0, 1);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Mqtt_Client_Sv = new Mtb_Services(mqtt_Client_Task, &mtb_MQTT_Client_Task_H, "MQTT Client Sv", 6144, 0, 1);
 
-// void mtb_MQTT_Server::on_subscribe(const char *client_id, const char *topic){
-//   ESP_LOGI(TAG, "client subscribed.\n");
-// }
-
-// void mtb_MQTT_Server::on_unsubscribe(const char *client_id, const char *topic){
-//   ESP_LOGI(TAG, "client un-subscribed.\n");
-// }
-
-// void start_MQTT_Server(){
+// void mqtt_Server_Task(void* d_Service){
+//   Mtb_Services *thisServ = (Mtb_Services *)d_Service;
 //   mqttServer.begin();   // Start MQTT broker
-//   // mqttServerStack_Ptr = (StackType_t *)heap_caps_malloc(4096, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-//   // mqttServerTcb_psram_Ptr = (StaticTask_t *)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL);
-//   xTaskCreatePinnedToCore(MQTT_Server_Task, "MQTT_Se Task", 6144, NULL, 0, &mtb_MQTT_Server_Task_Handle, 1);   // DO NOT GIVE THESE TASK HIGH PRIORITY. Review Task Stack Size
-//   //mtb_MQTT_Server_Task_Handle = xTaskCreateStaticPinnedToCore(MQTT_Server_Task, "MQTT_Server Task", 4096, NULL, 0, mqttServerStack_Ptr, mqttServerTcb_psram_Ptr, 1);
-// }
 
-void start_MQTT_Client(){
-  mqttClient.begin();   // Start MQTT Client
-  xTaskCreatePinnedToCore(MQTT_Client_Task, "MQTT_Cl Task", 6144, NULL, 0, &mtb_MQTT_Client_Task_Handle, 1);    // DO NOT GIVE THIS TASK A HIGH PRIORITY. Review Task Stack Size
-}
-// void stop_MQTT_Server(){
+//   mtb_Setup_Mqtt_Server();
+
+//   while(MTB_SERV_IS_ACTIVE == pdTRUE) {
+//     mqttServer.loop();
+//     vTaskDelay(1);
+//   }
+
 //   //Stop MQTT Broker
-//   if(mtb_MQTT_Server_Task_Handle !=NULL){
 //   mqttServer.stop();
-//   vTaskDelete(mtb_MQTT_Server_Task_Handle);
-//   mtb_MQTT_Server_Task_Handle = NULL;
-// }
+//   mtb_Delete_This_Service(thisServ);
 // }
 
-void stop_MQTT_Client(){
-  // Stop MQTT Client.
-  if(mtb_MQTT_Client_Task_Handle !=NULL){
-  mqttClient.stop();
-  vTaskDelete(mtb_MQTT_Client_Task_Handle);
-  mtb_MQTT_Client_Task_Handle = NULL;
-  }
-}
 
-void initialize_MQTT(){
+void mqtt_Client_Task(void* d_Service){
+    Mtb_Services *thisServ = (Mtb_Services *)d_Service;
+    mqttClient.begin();   // Start MQTT Client
+    mtb_Setup_Mqtt_Client();
 
-  // if(config_Cmd_MQTT_queue == NULL) config_Cmd_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Put queue in PSRAM.
-  // if(app_MQTT_queue == NULL) app_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Put queue in PSRAM.
-
-  // // Subscribe to a topic pattern and attach a callback
-  // mqttServer.subscribe("#", [](const char *topic, const void *payload, size_t payload_size){
-  //     ESP_LOGI(TAG, "\n This Topic: %s came through. \n", topic);
-
-  //     // if(strstr(topic, config_MQTT_Topic) != NULL){
-  //     //     if (payload_size){
-  //     //     strcpy(config_Cmd_mqtt_data.topic_Listen, topic);
-  //     //     strcpy(config_Cmd_mqtt_data.topic_Response, topic);
-  //     //     strcat(config_Cmd_mqtt_data.topic_Response, "/Response");
-
-  //     //     config_Cmd_mqtt_data.pay_size = payload_size;
-  //     //     config_Cmd_mqtt_data.payload = heap_caps_calloc(payload_size + 1, sizeof(uint8_t), MALLOC_CAP_SPIRAM);
-  //     //     memcpy(config_Cmd_mqtt_data.payload, payload, payload_size);
-  //     //     xQueueSend(config_Cmd_MQTT_queue, &config_Cmd_mqtt_data, portMAX_DELAY);
-  //     //     mtb_Launch_This_Service(mqtt_Config_Parse_Sv);
-  //     //     }
-  //     // }
-  //     // else if(strstr(topic, apps_MQTT_Topic) != NULL){
-  //     //   if (payload_size){
-  //     //     strcpy(apps_mqtt_data.topic_Listen, topic);
-  //     //     strcpy(apps_mqtt_data.topic_Response, topic);
-  //     //     strcat(apps_mqtt_data.topic_Response, "/Response");
-
-  //     //     apps_mqtt_data.pay_size = payload_size;
-  //     //     apps_mqtt_data.payload = heap_caps_calloc(payload_size + 1, sizeof(uint8_t), MALLOC_CAP_SPIRAM);
-  //     //     memcpy(apps_mqtt_data.payload, payload, payload_size);
-  //     //     xQueueSend(app_MQTT_queue, &apps_mqtt_data, portMAX_DELAY);
-  //     //     mtb_Launch_This_Service(appMQTT_Parser_Sv);
-  //     //   }
-  //     //}
-  //     });
-
-  mqttClient.connected_callback = []{
-    File2Download_t holderItem;
-    mtb_Show_Status_Bar_Icon({"/batIcons/mqttCont2.png", 10, 1});
-    if(xQueuePeek(files2Download_Q, &holderItem, pdMS_TO_TICKS(100)) == pdTRUE) mtb_Launch_This_Service(mtb_GitHub_File_Dwnload_Sv);
-    else Mtb_Applications::internetConnectStatus = true;
-    mtb_Set_Status_RGB_LED(CYAN_PROCESS);
-  };
-
-  mqttClient.disconnected_callback = []{
-    mtb_Wipe_Status_Bar_Icon({"/batIcons/mqttCont2.png", 10, 1});
-    Mtb_Applications::internetConnectStatus = false;
-    mtb_Set_Status_RGB_LED(WiFi.status() == WL_CONNECTED ? GREEN : BLACK);
-  };
-  //IMPLEMENT ON_SUBSCRIBE, AND ON_UNSUBSCRIBE H
-}
-
-// void MQTT_Server_Task(void* arguments){
-  // while(1) {
-  //   mqttServer.loop();
-  //   vTaskDelay(1);
-  // }
-  // vTaskDelete(NULL);
-// }
-
-void MQTT_Client_Task(void* arguments){
-  while(1) {
+  while(MTB_SERV_IS_ACTIVE == pdTRUE) {
     mqttClient.loop();
     vTaskDelay(1);
   }
-  vTaskDelete(NULL);
+
+    // Stop MQTT Client.
+    mqttClient.stop();
+    mtb_Delete_This_Service(thisServ);
+}
+
+
+// void mtb_MQTT_Server::on_connected(const char *client_id){
+//   mtb_Show_Status_Bar_Icon({"/batIcons/phoneCont.png", 18, 1});
+//   //mtb_Set_Status_RGB_LED(WHITE_SMOKE);
+//   //Mtb_Applications::mqttPhoneConnectStatus = true;
+// }
+
+// void mtb_MQTT_Server::on_disconnected(const char *client_id){
+//     mtb_Wipe_Status_Bar_Icon({"/batIcons/phoneCont.png", 18, 1});
+//     //mtb_Set_Status_RGB_LED(GREEN);
+//     //Mtb_Applications::mqttPhoneConnectStatus = false;
+// }
+
+// void mtb_MQTT_Server::on_subscribe(const char *client_id, const char *topic){
+//   ESP_LOGI(TAG, "mqtt Client subscribed.\n");
+// }
+
+// void mtb_MQTT_Server::on_unsubscribe(const char *client_id, const char *topic){
+//   ESP_LOGI(TAG, "mqtt Client un-subscribed.\n");
+// }
+
+
+// void mtb_Setup_Mqtt_Server(){
+//   if(config_Cmd_MQTT_queue == NULL) config_Cmd_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Put queue in PSRAM.
+//   if(app_MQTT_queue == NULL) app_MQTT_queue = xQueueCreate(mqtt_queue_size,sizeof(mqtt_Data_Trans_t));     // REVISIT -> Put queue in PSRAM.
+
+//   // Subscribe to a topic pattern and attach a callback
+//   mqttServer.subscribe("#", [](const char *topic, const void *payload, size_t payload_size){
+//       ESP_LOGI(TAG, "\n This Topic: %s came through. \n", topic);
+
+//       if(strstr(topic, config_MQTT_Topic) != NULL){
+//           if (payload_size){
+//           strcpy(config_Cmd_mqtt_data.topic_Listen, topic);
+//           strcpy(config_Cmd_mqtt_data.topic_Response, topic);
+//           strcat(config_Cmd_mqtt_data.topic_Response, "/Response");
+
+//           config_Cmd_mqtt_data.pay_size = payload_size;
+//           config_Cmd_mqtt_data.payload = heap_caps_calloc(payload_size + 1, sizeof(uint8_t), MALLOC_CAP_SPIRAM);
+//           memcpy(config_Cmd_mqtt_data.payload, payload, payload_size);
+//           xQueueSend(config_Cmd_MQTT_queue, &config_Cmd_mqtt_data, portMAX_DELAY);
+//           //mtb_Launch_This_Service(mqtt_Config_Parse_Sv);
+//           }
+//       }
+//       else if(strstr(topic, apps_MQTT_Topic) != NULL){
+//         if (payload_size){
+//           strcpy(apps_mqtt_data.topic_Listen, topic);
+//           strcpy(apps_mqtt_data.topic_Response, topic);
+//           strcat(apps_mqtt_data.topic_Response, "/Response");
+
+//           apps_mqtt_data.pay_size = payload_size;
+//           apps_mqtt_data.payload = heap_caps_calloc(payload_size + 1, sizeof(uint8_t), MALLOC_CAP_SPIRAM);
+//           memcpy(apps_mqtt_data.payload, payload, payload_size);
+//           xQueueSend(app_MQTT_queue, &apps_mqtt_data, portMAX_DELAY);
+//           //mtb_Launch_This_Service(appMQTT_Parser_Sv);
+//         }
+//       }
+//       });
+//     }
+
+  void mtb_Setup_Mqtt_Client(){
+    mqttClient.connected_callback = []{
+      File2Download_t holderItem;
+      mtb_Show_Status_Bar_Icon({"/batIcons/mqttCont2.png", 10, 1});
+      if(xQueuePeek(files2Download_Q, &holderItem, pdMS_TO_TICKS(100)) == pdTRUE) mtb_Launch_This_Service(mtb_GitHub_File_Dwnload_Sv);
+      else Mtb_Applications::internetConnectStatus = true;
+      mtb_Set_Status_RGB_LED(CYAN_PROCESS);
+    };
+
+    mqttClient.disconnected_callback = []{
+      mtb_Wipe_Status_Bar_Icon({"/batIcons/mqttCont2.png", 10, 1});
+      Mtb_Applications::internetConnectStatus = false;
+      mtb_Set_Status_RGB_LED(WiFi.status() == WL_CONNECTED ? GREEN : BLACK);
+    };
 }

@@ -42,8 +42,7 @@ void wifi_CurrentContdNetwork(void){
 // Handlers for the WiFi events
 void handle_wifi_connected(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     ESP_LOGI(TAG, "PixlPal WiFi Connected to AP");
-    //if(mtb_MQTT_Server_Task_Handle == NULL) start_MQTT_Server();
-    if(mtb_MQTT_Client_Task_Handle == NULL) start_MQTT_Client();
+    mtb_Launch_This_Service(mtb_Mqtt_Client_Sv);
     Mtb_Applications::pxpWifiConnectStatus = true;
 }
 
@@ -57,9 +56,9 @@ void handle_ip_address_obtained(void* arg, esp_event_base_t event_base, int32_t 
 }
 
 void handle_wifi_disconnected(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-    if (WiFi.status() == WL_CONNECT_FAILED) ESP_LOGI(TAG, "Heaven is in the heart"); //bleSettingsComSend("{\"pxp_command\": 1, \"connected\": 0}");
+    if (WiFi.status() == WL_CONNECT_FAILED) ESP_LOGI(TAG, "WiFi Connect Failed"); //bleSettingsComSend("{\"pxp_command\": 1, \"connected\": 0}");
     ESP_LOGI(TAG, "PixlPal WiFi Disconnected from AP\n");
-    if(mtb_MQTT_Client_Task_Handle != NULL) stop_MQTT_Client();
+    mtb_Kill_This_Service(mtb_Mqtt_Client_Sv);
     Mtb_Applications::internetConnectStatus = false;
     if(Mtb_Applications::pxpWifiConnectStatus == true){
         mtb_Show_Status_Bar_Icon({"/batIcons/wipe7x7.png", 1, 1});
@@ -80,7 +79,7 @@ void mtb_Wifi_Init() {
    
     mtb_Read_Nvs_Struct("Wifi Cred", &last_Successful_Wifi, sizeof(Wifi_Credentials));
 
-    initialize_MQTT();
+    //mtb_Launch_This_Service(mtb_Mqtt_Client_Sv);
     WiFi.begin(last_Successful_Wifi.ssid, last_Successful_Wifi.pass);
     mtb_Launch_This_Service(mtb_Sntp_Time_Sv);
 }

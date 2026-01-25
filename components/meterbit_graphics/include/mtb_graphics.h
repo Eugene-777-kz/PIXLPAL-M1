@@ -115,10 +115,10 @@
     extern void mtb_Panel_Clear_Screen(void);
     extern void mtb_Panel_Draw_HLine(uint16_t y, uint16_t x1, uint16_t x2, uint16_t color);
     extern void mtb_Panel_Draw_VLine(uint16_t x, uint16_t y1, uint16_t y2, uint16_t color);
-    
     extern void mtb_Panel_Draw_Rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,  uint16_t color);
     extern void mtb_Panel_Fill_Rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2,  uint16_t color);
     extern void mtb_Panel_Draw_Line(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+    
     extern void mtb_Panel_Draw_Circle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
     extern void mtb_Panel_Fill_Circle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
     extern void mtb_Panel_Draw_Triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);

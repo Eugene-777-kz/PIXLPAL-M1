@@ -69,7 +69,7 @@ void studioLight_App_Task(void* dApplication){
     }
     vSemaphoreDelete(studioLightMode_Sem_H);
     studioLightMode_Sem_H = NULL;
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 void selectStudioLightColorButton(button_event_t button_Data){

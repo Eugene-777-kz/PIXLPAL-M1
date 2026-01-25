@@ -54,7 +54,7 @@ bool Mtb_Applications::bleCentralContd = false;
 uint8_t Mtb_Applications::firmwareOTA_Status = 6;
 uint8_t Mtb_Applications::spiffsOTA_Status = 6;
 
-Mtb_Applications::Mtb_Applications(void (*dApplication)(void *), TaskHandle_t* dAppHandle_ptr, const char* dAppName, uint32_t dStackSize, uint8_t psRamStack, uint8_t core){
+Mtb_Applications::Mtb_Applications(void (*dApplication)(void *), TaskHandle_t* dAppHandle_ptr, const char* dAppName, uint32_t dStackSize, uint8_t core){
     application = dApplication;
     appHandle_ptr = dAppHandle_ptr;
     strcpy(appName, dAppName);
@@ -62,7 +62,6 @@ Mtb_Applications::Mtb_Applications(void (*dApplication)(void *), TaskHandle_t* d
     appPriority = 1;
     appCore = core;
     elementRefresh = true;
-    usePSRAM_Stack = psRamStack;
 }
 
 void mtb_Launch_This_App(Mtb_Applications *dApp, Mtb_Do_Prev_App_t do_Prv_App){
@@ -106,7 +105,7 @@ void appLuncherTask(void * dService){
     appLunchHolder->appRunner();       
     //ESP_LOGI(TAG, "Application %s has been launched\n", appLunchHolder->appName);
     }
-    mtb_End_This_Service(thisService);
+    mtb_Delete_This_Service(thisService);
 }
 
 void nvsAccessTask(void * dService){
@@ -143,7 +142,7 @@ void nvsAccessTask(void * dService){
                 xSemaphoreGive(nvsAccessComplete_Sem);
         }
     }
-        mtb_End_This_Service(thisService);
+        mtb_Delete_This_Service(thisService);
 }
 
 bool Mtb_Applications::appRunner(){
@@ -223,16 +222,23 @@ void Mtb_Applications::actionOnPreviousApp(Mtb_Do_Prev_App_t dAction){
     }
 }
 
-void mtb_End_This_App(Mtb_Applications* dApp){
+void mtb_Delete_This_App(Mtb_Applications* dApp){
         *(dApp->appHandle_ptr) = NULL;
         ESP_LOGI(TAG, "THIS APPLICATION HAS BEEN DELETED: %s \n", dApp->appName);
         vTaskDelete(NULL);
 }
 
-void mtb_End_This_Service(Mtb_Services* dService){
+// This function deletes a service task and frees its resources. Only call from within a service task.
+void mtb_Delete_This_Service(Mtb_Services* dService){
         *(dService->serviceT_Handle_ptr) = NULL;
         ESP_LOGI(TAG, "THIS SERVICE HAS BEEN DELETED: %s \n", dService->serviceName);
         vTaskDelete(NULL);
+}
+
+// This function deletes a service task and frees its resources. Call from outside the service task.
+void mtb_Kill_This_Service(Mtb_Services* dService){
+        *(dService->serviceT_Handle_ptr) = NULL;
+        ESP_LOGI(TAG, "THIS SERVICE HAS BEEN KILLED: %s \n", dService->serviceName);
 }
 
 void encoderDoNothing(rotary_encoder_rotation_t){}
@@ -446,7 +452,7 @@ void ble_AppCom_Parse_Task(void* dService){
     free(qMessage.payload);
     //qMessage.payload = NULL; // Set pointer to NULL to avoid dangling pointer    
   }
-  mtb_End_This_Service(thisService);
+  mtb_Delete_This_Service(thisService);
 }
 
 void Mtb_Service_With_Fns::mtb_Register_Ble_Comm_ServiceFns(bleCom_Parser_Fns_Ptr Fn_0, bleCom_Parser_Fns_Ptr Fn_1, bleCom_Parser_Fns_Ptr Fn_2 , bleCom_Parser_Fns_Ptr Fn_3, bleCom_Parser_Fns_Ptr Fn_4, bleCom_Parser_Fns_Ptr Fn_5, bleCom_Parser_Fns_Ptr Fn_6, bleCom_Parser_Fns_Ptr Fn_7, bleCom_Parser_Fns_Ptr Fn_8, bleCom_Parser_Fns_Ptr Fn_9, bleCom_Parser_Fns_Ptr Fn_10, bleCom_Parser_Fns_Ptr Fn_11){

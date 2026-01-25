@@ -25,8 +25,8 @@ EXT_RAM_BSS_ATTR StaticQueue_t xQueueStorage_File2Download;
 
 EXT_RAM_BSS_ATTR StaticQueue_t xQueueStorage_AppLuncher;
 
-EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *mtb_Encoder_Task_Sv = new Mtb_Service_With_Fns(encoder_Task, &encoder_Task_H, "Encoder Task", 6144, 0, pdTRUE, 1); // Review this task Stack Size // REVISIT -> CHECK IF THIS APP GETS CLOSED WHEN AN APP USING IT IS ENDED.
-EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *mtb_Button_Task_Sv = new Mtb_Service_With_Fns(button_Task, &button_Task_H, "Button Task", 6144, 0, pdTRUE, 1); // Review this task Stack Size    // REVISIT -> CHECK IF THIS APP GETS CLOSED WHEN AN APP USING IT IS ENDED.
+EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *mtb_Encoder_Task_Sv = new Mtb_Service_With_Fns(encoder_Task, &encoder_Task_H, "Encoder Task", 6144, 0, 1); // Review this task Stack Size // REVISIT -> CHECK IF THIS APP GETS CLOSED WHEN AN APP USING IT IS ENDED.
+EXT_RAM_BSS_ATTR Mtb_Service_With_Fns *mtb_Button_Task_Sv = new Mtb_Service_With_Fns(button_Task, &button_Task_H, "Button Task", 6144, 0, 1); // Review this task Stack Size    // REVISIT -> CHECK IF THIS APP GETS CLOSED WHEN AN APP USING IT IS ENDED.
 
 button_t pressButton{
   .pin = (gpio_num_t)GPIO_NUM_0,
@@ -67,14 +67,14 @@ void encoder_Task (void* dService){
     Mtb_Services *thisServ = (Mtb_Services *)dService;
     rotary_encoder_event_t encoder_Data;
     while (MTB_SERV_IS_ACTIVE == pdTRUE) if(xQueueReceive(encoderEvent_Q, &encoder_Data, pdMS_TO_TICKS(500)) == pdTRUE) encoderFn_ptr(encoder_Data.dir);
-    mtb_End_This_Service(thisServ);
+    mtb_Delete_This_Service(thisServ);
 }
 
 void button_Task (void* dService){
     Mtb_Services *thisServ = (Mtb_Services *)dService;
 	button_event_t button_Data;
     while (MTB_SERV_IS_ACTIVE == pdTRUE) if(xQueueReceive(buttonEvent_Q, &button_Data, pdMS_TO_TICKS(500)) == pdTRUE) buttonFn_ptr(button_Data);
-    mtb_End_This_Service(thisServ);
+    mtb_Delete_This_Service(thisServ);
 }
 
 void mtb_System_Init(void){

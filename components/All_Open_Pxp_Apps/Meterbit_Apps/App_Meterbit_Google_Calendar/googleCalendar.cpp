@@ -151,7 +151,7 @@ void  googleCal_App_Task(void* dApplication){
   delete event_Task_Status_1;
   delete event_Task_Status_2;
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 

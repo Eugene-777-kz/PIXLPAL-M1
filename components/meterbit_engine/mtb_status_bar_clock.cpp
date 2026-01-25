@@ -140,7 +140,7 @@ if(pre_Day != now->tm_mday  || timeRefresh){
   }
 }
 
-mtb_End_This_Service(thisServ);
+mtb_Delete_This_Service(thisServ);
 }
 
 

@@ -135,25 +135,26 @@ void  chatGPT_App_Task(void* dApplication){
     heap_caps_free(recordWavFile.psRamFile_P);
     OpenAI_StringResponse result = chat.message(text);
       if(result.length() == 1){
-          //ESP_LOGI(TAG, "Received message. Tokens: %u\n", result.tokens());
+          ESP_LOGI(TAG, "Received message. Tokens: %u\n", result.tokens());
           String response = result.getAt(0);
           response.trim();
-          //ESP_LOGI(TAG, "%s", response.c_str());
-        mtb_audioPlayer->mtb_Openai_Speech("tts-1", response , "shimmer", "mp3", "1");
+          ESP_LOGI(TAG, "%s", response.c_str());
+
+        mtb_audioPlayer->mtb_Openai_Speech("tts-1", response , "", "shimmer", "mp3", "1");
         aiResponse->mtb_Scroll_This_Text(response);
         
         } else if(result.length() > 1){
-          //ESP_LOGI(TAG, "Received %u messages. Tokens: %u\n", result.length(), result.tokens());
+          ESP_LOGI(TAG, "Received %u messages. Tokens: %u\n", result.length(), result.tokens());
           for (unsigned int i = 0; i < result.length(); ++i){
             String response = result.getAt(i);
             response.trim();
-            //ESP_LOGI(TAG, "Message[%u]:\n%s\n", i, response.c_str());
+            ESP_LOGI(TAG, "Message[%u]:\n%s\n", i, response.c_str());
           }
         } else if(result.error()){
           Serial.print("Error! ");
-          //ESP_LOGE(TAG, "Error! %s \n", result.error());
+          ESP_LOGE(TAG, "Error! %s \n", result.error());
         } else {
-           //ESP_LOGE(TAG, "Unknown error!");
+           ESP_LOGE(TAG, "Unknown error!");
         }
   //**************************************************************************************** */
     }
@@ -172,7 +173,7 @@ void  chatGPT_App_Task(void* dApplication){
   delete humanSpeech;
   delete aiResponse;
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 void Listen_Process_Button(button_event_t button_Data){
@@ -263,7 +264,7 @@ void micAudioListen_Task(void* d_Service){	// Consider using hardware timer for 
   recWave.psRamFile_P = create_wav_in_psram(totalSampleBuffer, totalSamples, SAMPLE_RATE, &(recWave.psRamFile_Size));
   xQueueSend(chatPrompt_Queue_H, &recWave, pdTICKS_TO_MS(250));
 
-  mtb_End_This_Service(thisServ);
+  mtb_Delete_This_Service(thisServ);
   }
 //######################################################################################### */
 

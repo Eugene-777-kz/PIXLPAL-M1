@@ -107,10 +107,6 @@ uint32_t stackSize = 2048;                 // Stack size of the application
 uint8_t servicePriority = 1;               // Priority of the application
 TaskHandle_t* serviceT_Handle_ptr = NULL;  // Pointer to the Service's task handle.
 uint8_t serviceCore = 0;                   // Core on which the application task is running on.
-BaseType_t usePSRAM_Stack = pdFALSE;       // Create task stack in PSRAM (Only use for task that don't require speed)
-StackType_t *task_stack = NULL;
-StaticTask_t* tcb_static = NULL;
-//void* serv_Dyn_Mems[5] = {nullptr};
 uint8_t service_is_Running = pdFALSE;
 
 // Overload the new operator
@@ -121,14 +117,13 @@ void operator delete(void* ptr) {heap_caps_free(ptr);}
 
 // Services Constructors
 Mtb_Services(){};
-Mtb_Services(void (*dService)(void *), TaskHandle_t* dServiceHandle_ptr, const char* dServiceName, uint32_t dStackSize, uint8_t dServicePriority = 1, uint8_t dServicePSRamStack = pdFALSE, uint8_t dServiceCore = 0){
+Mtb_Services(void (*dService)(void *), TaskHandle_t* dServiceHandle_ptr, const char* dServiceName, uint32_t dStackSize, uint8_t dServicePriority = 1, uint8_t dServiceCore = 0){
     service = dService;
     serviceT_Handle_ptr = dServiceHandle_ptr;
     strcpy(serviceName, dServiceName);
     stackSize = dStackSize;
     servicePriority = dServicePriority;
     serviceCore = dServiceCore;
-    usePSRAM_Stack = dServicePSRamStack;
 }
 };
 
@@ -151,7 +146,7 @@ class Mtb_Service_With_Fns : public Mtb_Services{
     }
         // Services with Functions Constructors
         Mtb_Service_With_Fns();
-        Mtb_Service_With_Fns(void (*dService)(void *), TaskHandle_t *dServiceHandle_ptr, const char *dServiceName, uint32_t dStackSize, uint8_t dServicePriority = 1, uint8_t dServicePSRamStack = pdFALSE, uint8_t dServiceCore = 0) : Mtb_Services(dService, dServiceHandle_ptr,dServiceName, dStackSize, dServicePriority, dServicePSRamStack, dServiceCore){}
+        Mtb_Service_With_Fns(void (*dService)(void *), TaskHandle_t *dServiceHandle_ptr, const char *dServiceName, uint32_t dStackSize, uint8_t dServicePriority = 1, uint8_t dServiceCore = 0) : Mtb_Services(dService, dServiceHandle_ptr,dServiceName, dStackSize, dServicePriority, dServiceCore){}
 };
 
 
@@ -164,9 +159,6 @@ public:
     uint8_t appPriority;                // Priority of the application
     TaskHandle_t* appHandle_ptr;        // Pointer to the application task handle.
     uint8_t appCore;                    // Core on which the application task is running on.
-    BaseType_t usePSRAM_Stack;          // Create task stack in PSRAM (Only use for task that don't require speed, or for tasks that require large stack size, or tasks that don't read flash using LittleFS)
-    StackType_t *task_stack = NULL;     // Pointer to the task stack, if usePSRAM_Stack is true, this will be allocated in PSRAM.
-    StaticTask_t* tcb_static = NULL;     // Pointer to the task control block, if usePSRAM_Stack is true, this will be allocated in PSRAM.
 
     Mtb_Services* appServices[10] = {nullptr};  // An array of 10 Service Pointers. This will hold pointers to the Mtb_Services tasks both generic and perculiar. e.g. Mic Service 
     void (*mtb_App_EncoderFn_ptr)(rotary_encoder_rotation_t) = encoderDoNothing;        // Pointer to the function that will be called when the rotary encoder is rotated.
@@ -213,7 +205,7 @@ public:
 
     // Applications Constructors
     Mtb_Applications();                                             // Default constructor
-    Mtb_Applications(void (*dApplication)(void *), TaskHandle_t* dAppHandle_ptr, const char* dAppName, uint32_t dStackSize, uint8_t psRamStack, uint8_t core);
+    Mtb_Applications(void (*dApplication)(void *), TaskHandle_t* dAppHandle_ptr, const char* dAppName, uint32_t dStackSize, uint8_t core);
     //virtual 
 };
 
@@ -221,8 +213,8 @@ public:
 class Mtb_Applications_FullScreen : public Mtb_Applications{            
     public:
         Mtb_Applications_FullScreen();
-        Mtb_Applications_FullScreen(void (*dApplication)(void *), TaskHandle_t *dAppHandle_ptr, const char *dAppName, uint32_t dStackSize = 4096, uint8_t psRamStack = pdFALSE, uint8_t core = 0) : 
-        Mtb_Applications(dApplication, dAppHandle_ptr, dAppName, dStackSize, psRamStack, core) { 
+        Mtb_Applications_FullScreen(void (*dApplication)(void *), TaskHandle_t *dAppHandle_ptr, const char *dAppName, uint32_t dStackSize = 4096, uint8_t core = 0) : 
+        Mtb_Applications(dApplication, dAppHandle_ptr, dAppName, dStackSize, core) { 
             fullScreen = true;
         }
 };
@@ -231,8 +223,8 @@ class Mtb_Applications_FullScreen : public Mtb_Applications{
 class Mtb_Applications_StatusBar : public Mtb_Applications{
     public:
         Mtb_Applications_StatusBar();
-        Mtb_Applications_StatusBar(void (*dApplication)(void *), TaskHandle_t *dAppHandle_ptr, const char *dAppName, uint32_t dStackSize = 4096, uint8_t psRamStack = pdFALSE, uint8_t core = 0) : 
-        Mtb_Applications(dApplication, dAppHandle_ptr, dAppName, dStackSize, psRamStack, core) { 
+        Mtb_Applications_StatusBar(void (*dApplication)(void *), TaskHandle_t *dAppHandle_ptr, const char *dAppName, uint32_t dStackSize = 4096, uint8_t core = 0) : 
+        Mtb_Applications(dApplication, dAppHandle_ptr, dAppName, dStackSize, core) { 
             fullScreen = false;
         }
 };
@@ -251,8 +243,9 @@ extern void mtb_Launch_This_Service(Mtb_Services*);
 //extern void mtb_Queue_This_Service(Mtb_Services*);
 extern void mtb_Resume_This_Service(Mtb_Services*);
 extern void mtb_Suspend_This_Service(Mtb_Services*);
-extern void mtb_End_This_Service(Mtb_Services *);
-extern void mtb_End_This_App(Mtb_Applications *);
+extern void mtb_Delete_This_Service(Mtb_Services *);
+extern void mtb_Kill_This_Service(Mtb_Services* );
+extern void mtb_Delete_This_App(Mtb_Applications *);
 
 extern void mtb_General_App_Lunch(Mtb_CurrentApp_t);
 
@@ -277,7 +270,7 @@ extern void mtb_Miscellanous_App_Lunch(uint16_t);
 
 // System Sevices
 
-// Fast Executing Services. These services will be made to share a particular stack DRAM memory to prevent memory fragmentation.
+// Fast Executing Services.
 extern Mtb_Services* mtb_App_Luncher_Sv;
 extern Mtb_Service_With_Fns* mtb_App_BleComm_Parser_Sv;
 extern Mtb_Services* mtb_Sett_BleComm_Parser_Sv;           
@@ -286,6 +279,7 @@ extern Mtb_Services* mtb_Sntp_Time_Sv;
 extern Mtb_Services* mtb_Read_Write_NVS_Sv;
 extern Mtb_Services* mtb_Png_Local_ImageDrawer_Sv;
 extern Mtb_Services* mtb_SvgLocal_ImageDrawer_Sv;
+extern Mtb_Services* mtb_Mqtt_Client_Sv;
 
 // Slow Executing Services
 //extern Mtb_Services* mtb_Serv_Luncher_Sv;
@@ -293,12 +287,12 @@ extern Mtb_Services *mtb_GitHub_File_Dwnload_Sv;
 extern Mtb_Services* mtb_Audio_Out_Sv;
 extern Mtb_Services* mtb_Audio_In_Sv;
 extern Mtb_Services* mtb_Usb_Audio_Sv;
+extern Mtb_Services* mtb_Usb_Mass_Storage_Sv;   
 //extern Mtb_Services* UAC_Speaker_Sv;
 extern Mtb_Services* mtb_Scroll_Tasks_Sv[];   
 extern Mtb_Service_With_Fns* mtb_Encoder_Task_Sv;       
 extern Mtb_Service_With_Fns* mtb_Button_Task_Sv;        
-extern Mtb_Services* mtb_Usb_Mass_Storage_Sv;      
-
+   
 //*********************************************************************************** */
 // Mtb_Applications SECTION (USERS AND SYSTEM APPS)
 

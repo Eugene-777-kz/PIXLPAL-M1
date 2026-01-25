@@ -59,7 +59,7 @@ void rssNewsApp_Task(void* dApp) {
       delay(1000);
     }
   }
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 void updateSourceSelection(JsonDocument &doc) {

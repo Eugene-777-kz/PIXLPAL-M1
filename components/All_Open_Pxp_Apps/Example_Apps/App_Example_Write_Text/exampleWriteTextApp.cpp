@@ -31,7 +31,7 @@ void exampleWriteTextApp_Task(void* dApplication){
 }
 
 // Clean up the application before exiting
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 

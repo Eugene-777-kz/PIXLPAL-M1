@@ -266,5 +266,5 @@ void ble_SetCom_Parse_Task(void* dService){
     //qMessage.payload = NULL; // Set pointer to NULL to avoid dangling pointer
   }
   
-  mtb_End_This_Service(thisService);
+  mtb_Delete_This_Service(thisService);
 }

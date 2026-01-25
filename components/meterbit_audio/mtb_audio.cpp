@@ -26,9 +26,9 @@ static const char TAG[] = "METERBIT_DAC_N_MIC";
 //static const char *TAG = "UAC_PIPE";
 
 // ---- Audio format (match what you opened the speaker with) ----
-#define USB_SRATE_HZ        48000
-#define USB_BITS_PER_SAMPLE 16
-#define USB_CHANNELS        2
+#define USB_SRATE_HZ            48000
+#define USB_BITS_PER_SAMPLE     16
+#define USB_CHANNELS            2
 
 #define UAC_TASK_PRIORITY       5
 #define DEFAULT_UAC_FREQ        48000
@@ -133,10 +133,10 @@ uint8_t kMatrixWidth = 128; //   PANEL_WIDTH
 uint8_t kMatrixHeight = 64; // PANEL_HEIGHT
 int loopcounter = 0;
 
-EXT_RAM_BSS_ATTR Mtb_Services *UAC_Speaker_Sv = new Mtb_Services(uac_Speaker_Task, &uac_task_handle, "uac_events", 4096, 2, pdTRUE, 0);
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Usb_Audio_Sv = new Mtb_Services(usb_Speaker_Process_Task, &usb_Speaker_Process_Task_H, "Usb Aud Serv.", 4096, 5, pdTRUE, 0);
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Audio_Out_Sv = new Mtb_Services(audio_Out_Processing_Task, &audioOutProcessing_Task_H, "Aud Out Serv.", 6144, 2, pdFALSE, 1);
-EXT_RAM_BSS_ATTR Mtb_Services *mtb_Audio_In_Sv = new Mtb_Services(audio_In_Processing_Task, &audioInProcessing_Task_H, "Aud In Serv.", 4096, 2, pdFALSE, 1);
+EXT_RAM_BSS_ATTR Mtb_Services *UAC_Speaker_Sv = new Mtb_Services(uac_Speaker_Task, &uac_task_handle, "uac_events", 4096, 2, 0);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Usb_Audio_Sv = new Mtb_Services(usb_Speaker_Process_Task, &usb_Speaker_Process_Task_H, "Usb Aud Serv.", 4096, 5, 0);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Audio_Out_Sv = new Mtb_Services(audio_Out_Processing_Task, &audioOutProcessing_Task_H, "Aud Out Serv.", 6144, 2, 1);
+EXT_RAM_BSS_ATTR Mtb_Services *mtb_Audio_In_Sv = new Mtb_Services(audio_In_Processing_Task, &audioInProcessing_Task_H, "Aud In Serv.", 4096, 2, 1);
 
 void audio_Out_Processing_Task(void *d_Service){
   Mtb_Services *thisServ = (Mtb_Services *)d_Service;
@@ -147,7 +147,7 @@ void audio_Out_Processing_Task(void *d_Service){
   mtb_Read_Nvs_Struct("dev_Volume", &deviceVolume, sizeof(uint8_t));
 
   audio = new Audio();
-  delay(100);                                 // wait for the audio object to be successfully created.
+  delay(100);                                    // wait for the audio object to be successfully created.
   audio->setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
   audio->setVolume(deviceVolume);
   audio->setConnectionTimeout(65000, 65000);
@@ -162,8 +162,8 @@ void audio_Out_Processing_Task(void *d_Service){
     switch(audioOutMode){
       case CONNECT_HOST: mtb_audioPlayer->contdSucceed = (int8_t) audio->connecttohost(mtb_audioPlayer->host_Url.c_str(), mtb_audioPlayer->host_Username.c_str(), mtb_audioPlayer->host_Password.c_str());
         break;
-      // case OPENAI_SPEECH: mtb_audioPlayer->contdSucceed = (int8_t) audio->openai_speech(String(openai_key) , mtb_audioPlayer->openAI_Model, mtb_audioPlayer->speech_Message, mtb_audioPlayer->openAI_Voice,mtb_audioPlayer->openAI_ResponseFormat, mtb_audioPlayer->openAI_Speed);
-      //   break;
+      case OPENAI_SPEECH: mtb_audioPlayer->contdSucceed = (int8_t) audio->openai_speech(String(openai_key), mtb_audioPlayer->openAI_Model, mtb_audioPlayer->speech_Message, mtb_audioPlayer->openAI_Instructions, mtb_audioPlayer->openAI_Voice, mtb_audioPlayer->openAI_ResponseFormat, mtb_audioPlayer->openAI_Speed);
+        break;
       case CONNECT_SPEECH: mtb_audioPlayer->contdSucceed = (int8_t) audio->connecttospeech(mtb_audioPlayer->speech_Message.c_str(), mtb_audioPlayer->ggle_Lang.c_str());
         break;
       case CONNECT_USB_FS: mtb_audioPlayer->contdSucceed = (int8_t) audio->connecttoFS(USBFS, mtb_audioPlayer->filePath.c_str(), mtb_audioPlayer->fileStartPos);
@@ -188,12 +188,12 @@ void audio_Out_Processing_Task(void *d_Service){
     audio = nullptr;
 
 //######################################################################################################################
-  //mtb_End_This_Service(mtb_Usb_Audio_Sv);
+  //mtb_Delete_This_Service(mtb_Usb_Audio_Sv);
 //###################################################################################################################### 
   delete mtb_audioPlayer;
   vQueueDelete(audioTextInfo_Q); audioTextInfo_Q = NULL; //The Queue remains active for the next audio service. This prevents apps such as the Internet Radio from crashing.
   de_init_Audio_Out_Processing();
-  mtb_End_This_Service(thisServ);
+  mtb_Delete_This_Service(thisServ);
 }
 
 void audio_In_Processing_Task(void *d_Service){
@@ -229,7 +229,7 @@ void audio_In_Processing_Task(void *d_Service){
   }
   I2S_Record_De_Init();
   de_init_Audio_In_Processing();
-  mtb_End_This_Service(thisServ);
+  mtb_Delete_This_Service(thisServ);
 }
 
 void init_Audio_Out_Processing(void){
@@ -683,12 +683,13 @@ void audioVisualizer(){
   audioSpecVisual_Set.selectedPattern = rand() % NO_OF_AUDSPEC_PATTERNS;
  }
 
-bool MTB_Audio::mtb_Openai_Speech(const String& model, const String& input, const String& voice, const String& response_format, const String& speed){
+bool MTB_Audio::mtb_Openai_Speech(const String& model, const String& input, const String& instructions, const String& voice, const String& response_format, const String& speed){
   int16_t countdown = 2000;   // 2000 here represents the number of 5ms in 10s
   contdSucceed = -1;
   
   openAI_Model = model;
   speech_Message = input;
+  openAI_Instructions = instructions;
   openAI_Voice = voice;
   openAI_ResponseFormat = response_format;
   openAI_Speed = speed;
@@ -796,14 +797,14 @@ void usb_Speaker_Process_Task(void *d_Service){
         }
     }
 
-    mtb_End_This_Service(UAC_Speaker_Sv);
+    mtb_Delete_This_Service(UAC_Speaker_Sv);
 
     ESP_LOGI(TAG, "USB Host shutdown");
     // Clean up USB Host
     vTaskDelay(10); // Short delay to allow clients clean-up
     ESP_ERROR_CHECK(usb_host_uninstall());
 
-mtb_End_This_Service(thisServ);
+mtb_Delete_This_Service(thisServ);
 
 }
 
@@ -924,7 +925,7 @@ void uac_Speaker_Task(void *d_Service){
     ESP_ERROR_CHECK(uac_host_uninstall());
     delay(50);  // allow uac memory cleanup
 
-    mtb_End_This_Service(thisServ);
+    mtb_Delete_This_Service(thisServ);
 }
 
 

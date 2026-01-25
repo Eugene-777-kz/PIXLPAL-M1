@@ -117,7 +117,7 @@ void  spotify_App_Task(void* dApplication){
 
   }
 
-  mtb_End_This_App(thisApp);
+  mtb_Delete_This_App(thisApp);
 }
 
 
@@ -127,7 +127,7 @@ void performScreenUpdate_Task( void * d_Service ){
     while(MTB_SERV_IS_ACTIVE == pdTRUE){
           //server.handleClient();
     }
-    mtb_End_This_Service(thisServ);
+    mtb_Delete_This_Service(thisServ);
 }
 
 //***************************************************************************************************
