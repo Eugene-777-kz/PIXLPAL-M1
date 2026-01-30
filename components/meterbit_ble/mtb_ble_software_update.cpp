@@ -14,7 +14,6 @@
 #include "nvs.h"
 #include <esp_app_desc.h>
 #include <esp_ghota.h>
-
 #include "Arduino.h"
 #include "ArduinoJson.h"
 #include "mtb_nvs.h"
