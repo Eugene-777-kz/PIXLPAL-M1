@@ -20,6 +20,11 @@ static std::vector<size_t, PSRAMAllocator<size_t>>   gShuffledIdx;
 static size_t gNext = 0;
 
 namespace {
+
+static inline std::string toStdString(const PsString& s) {
+  return std::string(s.data(), s.size());
+}
+
 struct EspRandomEngine {
   using result_type = uint32_t;
   result_type operator()() const { return esp_random(); }
@@ -36,10 +41,12 @@ void makePermutation() {
 
 void parseJsonOnce() {
   if (!gCountries.empty()) return;
+
   constexpr size_t CAPACITY = 200 * 1024;
   SpiRamJsonDocument doc(CAPACITY);
   DeserializationError err = deserializeJson(doc, jsonWorldCountries);
   if (err) { ESP_LOGI(TAGG, "JSON error: %s\n", err.c_str()); return; }
+
   for (JsonObject obj : doc.as<JsonArray>()) {
     Country c;
     c.name    = obj["name"].as<const char*>();
@@ -48,14 +55,21 @@ void parseJsonOnce() {
   }
   makePermutation();
 }
+
+// Single source of truth for "next random country"
+const Country* pickNextCountry() {
+  parseJsonOnce();
+  if (gCountries.empty()) return nullptr;
+  if (gNext >= gShuffledIdx.size()) makePermutation();
+  return &gCountries[gShuffledIdx[gNext++]];
+}
+
 } // namespace
 
 std::string getRandomFlag4x3() {
-  parseJsonOnce();
-  if (gCountries.empty()) return {};
-  if (gNext >= gShuffledIdx.size()) makePermutation();
-  const PsString& ps = gCountries[gShuffledIdx[gNext++]].flag4x3;
-  return std::string(ps.data(), ps.size());
+  const Country* c = pickNextCountry();
+  if (!c) return {};
+  return toStdString(c->flag4x3);
 }
 
 std::string getFlag4x3ByCountry(const char* name) {
@@ -63,6 +77,32 @@ std::string getFlag4x3ByCountry(const char* name) {
   if (!name) return {};
   for (const auto& c : gCountries)
     if (strcasecmp(c.name.c_str(), name) == 0)
-      return std::string(c.flag4x3.data(), c.flag4x3.size());
+      return toStdString(c.flag4x3);
   return {};
 }
+
+// ------------------------------------------------------------
+// NEW: random country name
+// ------------------------------------------------------------
+std::string getRandomCountryName() {
+  const Country* c = pickNextCountry();
+  if (!c) return {};
+  return toStdString(c->name);
+}
+
+// ------------------------------------------------------------
+// NEW: random country + flag in one call (avoids duplicate lookups)
+// Returns false if DB not loaded / empty.
+// ------------------------------------------------------------
+bool getRandomCountryAndFlag4x3(std::string& outName, std::string& outFlag4x3) {
+  const Country* c = pickNextCountry();
+  if (!c) {
+    outName.clear();
+    outFlag4x3.clear();
+    return false;
+  }
+  outName    = toStdString(c->name);
+  outFlag4x3 = toStdString(c->flag4x3);
+  return true;
+}
+

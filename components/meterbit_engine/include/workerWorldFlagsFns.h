@@ -4,7 +4,8 @@
 #include <string>
 
 extern const char* jsonWorldCountries;
-
+std::string getRandomCountryName();
+bool getRandomCountryAndFlag4x3(std::string& outName, std::string& outFlag4x3);
 std::string getRandomFlag4x3();
 std::string getFlag4x3ByCountry(const char* name);
 

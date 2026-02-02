@@ -49,24 +49,33 @@ void worldFlags_App_Task(void* dApplication){
     };
   mtb_Read_Nvs_Struct("worldFlagsData", &worldFlagsInfo, sizeof(WorldFlags_Data_t));
 
-    Mtb_OnlineImage_t imageHolder({"placeHolder", 16, 0, 1});
+    std::string country;
+    std::string flagLink;
+    Mtb_OnlineImage_t large_Flag({"link placeHolder", 16, 0, 1});
+    Mtb_OnlineImage_t small_Flag({"link placeHolder", 40, 10, 2});
+    Mtb_CentreText_t dispCountryName(65, 57, Terminal8x12, WHITE);
 
 while (MTB_APP_IS_ACTIVE == pdTRUE){
 
     while ((Mtb_Applications::internetConnectStatus != true) && (MTB_APP_IS_ACTIVE == pdTRUE)) delay(1000);
 
-        strcpy(imageHolder.imageLink, getFlag4x3ByCountry(worldFlagsInfo.countryName).c_str());
-        mtb_Draw_Online_Svg(&imageHolder, 1, wipeFlagBackground); 
+        strcpy(large_Flag.imageLink, getFlag4x3ByCountry(worldFlagsInfo.countryName).c_str());
+        mtb_Draw_Online_Svg(&large_Flag, 1, wipeFlagBackground);
 
     while (MTB_APP_IS_ACTIVE == pdTRUE && Mtb_Applications::internetConnectStatus == true) {
         if (worldFlagsInfo.cycleAllFlags == true) {
             uint8_t changeIntv = worldFlagsInfo.flagChangeIntv;
-            strcpy(imageHolder.imageLink, getRandomFlag4x3().c_str());
-            mtb_Draw_Online_Svg(&imageHolder, 1, wipeFlagBackground);
+            getRandomCountryAndFlag4x3(country, flagLink);
+            strcpy(large_Flag.imageLink, flagLink.c_str());
+            mtb_Draw_Online_Svg(&large_Flag, 1, wipeFlagBackground);
             while(changeIntv-->0 && Mtb_Applications::internetConnectStatus == true && MTB_APP_IS_ACTIVE == pdTRUE) delay(1000);
         } else delay(1000);
         if (worldFlagsInfo.showCountryName == true) {
-            
+            uint8_t changeIntv = worldFlagsInfo.flagChangeIntv;
+            strcpy(small_Flag.imageLink, large_Flag.imageLink);
+            mtb_Draw_Online_Svg(&small_Flag, 1, wipeFlagBackground);
+            dispCountryName.mtb_Write_Colored_String(country.c_str(), WHITE, mtb_Panel_Color565(0, 0, 16));
+            while(changeIntv-->0 && Mtb_Applications::internetConnectStatus == true && MTB_APP_IS_ACTIVE == pdTRUE) delay(1000);
         } 
     }
 }
